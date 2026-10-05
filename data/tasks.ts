@@ -1,0 +1,57 @@
+export type TaskStatus =
+  | "Pending"
+  | "In Progress"
+  | "Completed";
+
+export type TaskPriority =
+  | "Low"
+  | "Medium"
+  | "High";
+
+export type Task = {
+  id: number;
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignedTo: string;
+};
+
+export const tasks: Task[] = [
+  {
+    id: 1,
+    title: "Design login page",
+    description:
+      "Create and finalize the login page design for the NEXO platform.",
+    status: "In Progress",
+    priority: "High",
+    assignedTo: "Mohammad",
+  },
+  {
+    id: 2,
+    title: "Review letters",
+    description:
+      "Review received letters and prepare the required responses.",
+    status: "Pending",
+    priority: "Medium",
+    assignedTo: "Mohammad",
+  },
+  {
+    id: 3,
+    title: "Configure user permissions",
+    description:
+      "Configure roles and permissions for the NEXO users.",
+    status: "Completed",
+    priority: "High",
+    assignedTo: "Ali",
+  },
+  {
+    id: 4,
+    title: "Prepare dashboard",
+    description:
+      "Prepare the main dashboard and finalize its components.",
+    status: "In Progress",
+    priority: "Low",
+    assignedTo: "Mohammad",
+  },
+];
