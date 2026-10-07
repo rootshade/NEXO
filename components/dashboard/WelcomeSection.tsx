@@ -44,38 +44,7 @@ export default function WelcomeSection() {
             Here’s what’s happening in your workspace today.
           </p>
         </div>
-
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3">
-          {actions.map((action) => {
-            const Icon = action.icon;
-
-            return (
-              <button
-                key={action.label}
-                type="button"
-                className="
-                  flex items-center gap-2
-                  rounded-xl
-                  border border-slate-700
-                  bg-slate-800
-                  px-4 py-2.5
-                  text-sm font-medium
-                  text-slate-200
-                  transition-all
-                  duration-200
-                  hover:border-slate-600
-                  hover:bg-slate-700
-                  hover:text-white
-                "
-              >
-                <Icon size={17} />
-
-                <span>{action.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        
       </div>
     </section>
   );

@@ -29,18 +29,19 @@ export default function AppShell({
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-950">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="min-w-0 flex-1">
+      {/* Main */}
+      <div className="md:ml-64">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="p-6">
+        <main className="p-4 sm:p-6">
           {children}
         </main>
       </div>

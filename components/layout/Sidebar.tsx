@@ -14,6 +14,7 @@ export default function Sidebar({
 }: SidebarProps) {
   return (
     <>
+      {/* Mobile Overlay */}
       {open && (
         <button
           type="button"
@@ -23,52 +24,54 @@ export default function Sidebar({
         />
       )}
 
+      {/* Sidebar */}
       <aside
         className={`
           fixed inset-y-0 left-0 z-50
           flex h-screen w-64 flex-col
           bg-slate-950 text-white
           transition-transform duration-300
-          md:static md:translate-x-0
           ${
             open
               ? "translate-x-0"
-              : "-translate-x-full"
+              : "-translate-x-full md:translate-x-0"
           }
         `}
       >
         {/* Logo */}
-<div className="flex items-center justify-between p-6">
-  <h1 className="text-2xl font-bold">
-    NEXO
-  </h1>
+        <div className="flex shrink-0 items-center justify-between p-6">
+          <h1 className="text-2xl font-bold">
+            NEXO
+          </h1>
 
-  <button
-    type="button"
-    aria-label="Close sidebar"
-    className="
-      flex size-9 items-center justify-center
-      rounded-lg
-      text-slate-400
-      transition-colors
-      hover:bg-slate-800
-      hover:text-white
-      md:hidden
-    "
-    onClick={onClose}
-  >
-    <X size={20} />
-  </button>
-</div>
-     {/* Navigation */}
-<div className="min-h-0 flex-1 overflow-y-auto">
-  <SidebarNav onNavigate={onClose} />
-</div>
+          {/* Mobile Close Button */}
+          <button
+            type="button"
+            aria-label="Close sidebar"
+            className="
+              flex size-9 items-center justify-center
+              rounded-lg
+              text-slate-400
+              transition-colors
+              hover:bg-slate-800
+              hover:text-white
+              md:hidden
+            "
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-{/* User */}
-<div className="shrink-0">
-  <SidebarUser />
-</div>
+        {/* Navigation */}
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <SidebarNav onNavigate={onClose} />
+        </div>
+
+        {/* User */}
+        <div className="shrink-0">
+          <SidebarUser />
+        </div>
       </aside>
     </>
   );
