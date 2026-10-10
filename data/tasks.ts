@@ -15,6 +15,10 @@ export type Task = {
   status: TaskStatus;
   priority: TaskPriority;
   assignedTo: string;
+
+  // Task dates
+  createdAt: string;
+  deadline: string;
 };
 
 export const tasks: Task[] = [
@@ -26,7 +30,10 @@ export const tasks: Task[] = [
     status: "In Progress",
     priority: "High",
     assignedTo: "Mohammad",
+    createdAt: "2026-10-01",
+    deadline: "2026-10-10",
   },
+
   {
     id: 2,
     title: "Review letters",
@@ -35,7 +42,10 @@ export const tasks: Task[] = [
     status: "Pending",
     priority: "Medium",
     assignedTo: "Mohammad",
+    createdAt: "2026-10-03",
+    deadline: "2026-10-08",
   },
+
   {
     id: 3,
     title: "Configure user permissions",
@@ -44,7 +54,10 @@ export const tasks: Task[] = [
     status: "Completed",
     priority: "High",
     assignedTo: "Ali",
+    createdAt: "2026-09-28",
+    deadline: "2026-10-02",
   },
+
   {
     id: 4,
     title: "Prepare dashboard",
@@ -53,5 +66,7 @@ export const tasks: Task[] = [
     status: "In Progress",
     priority: "Low",
     assignedTo: "Mohammad",
+    createdAt: "2026-10-02",
+    deadline: "2026-10-15",
   },
 ];

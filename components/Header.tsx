@@ -24,7 +24,7 @@ export default function Header({
   const title = pageTitles[pathname] ?? "Page";
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-800 px-4 md:px-6">
+    <header className="flex h-16 items-center border-b border-slate-800 px-4 md:px-6">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -46,16 +46,6 @@ export default function Header({
         <h1 className="text-xl font-semibold text-white">
           {title}
         </h1>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-full bg-slate-700 text-sm font-semibold text-white">
-          M
-        </div>
-
-        <span className="hidden text-sm text-slate-300 sm:block">
-          Mohammad
-        </span>
       </div>
     </header>
   );

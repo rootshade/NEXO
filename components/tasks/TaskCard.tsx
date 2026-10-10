@@ -29,6 +29,9 @@ function getStatusStyle(status: TaskStatus) {
 
     case "Pending":
       return "bg-yellow-500/10 text-yellow-400";
+
+    default:
+      return "bg-slate-500/10 text-slate-400";
   }
 }
 
@@ -42,6 +45,9 @@ function getPriorityStyle(priority: TaskPriority) {
 
     case "Low":
       return "bg-green-500/10 text-green-400";
+
+    default:
+      return "bg-slate-500/10 text-slate-400";
   }
 }
 
@@ -94,7 +100,17 @@ export default function TaskCard({
       </div>
 
       {/* Bottom */}
-      <div className="mt-5 flex flex-col gap-3 border-t border-slate-800 pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div
+        className="
+          mt-5
+          flex flex-col gap-3
+          border-t border-slate-800
+          pt-4
+          sm:flex-row
+          sm:items-center
+          sm:justify-between
+        "
+      >
         <span
           className={`
             w-fit
@@ -108,7 +124,16 @@ export default function TaskCard({
         </span>
 
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white">
+          <div
+            className="
+              flex size-8
+              items-center justify-center
+              rounded-full
+              bg-slate-700
+              text-xs font-semibold
+              text-white
+            "
+          >
             {assignedTo.charAt(0).toUpperCase()}
           </div>
 
