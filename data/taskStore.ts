@@ -9,6 +9,7 @@ import type {
 } from "./tasks";
 
 const STORAGE_KEY = "nexo_tasks";
+export const TASKS_UPDATED_EVENT = "nexo-tasks-updated";
 let taskList: Task[] = [...initialTasks];
 
 function isTask(value: unknown): value is Task {
@@ -30,6 +31,7 @@ function persistTasks(): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList));
+    window.dispatchEvent(new CustomEvent(TASKS_UPDATED_EVENT));
   } catch (error) {
     console.error("Unable to save NEXO tasks:", error);
   }
