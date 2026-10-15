@@ -33,10 +33,14 @@ const filters: Filter[] = [
 ];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(getTasks());
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    setTasks(loadTasks());
+    const timer = window.setTimeout(() => {
+      setTasks(loadTasks());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const [activeFilter, setActiveFilter] =
