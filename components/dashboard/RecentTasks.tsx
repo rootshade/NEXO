@@ -12,7 +12,7 @@ function getStatusStyle(status: Task["status"]) {
     case "Completed":
       return "bg-green-500/10 text-green-400";
     case "In Progress":
-      return "bg-blue-500/10 text-blue-400";
+      return "bg-sky-400/10 text-sky-300";
     case "Pending":
       return "bg-yellow-500/10 text-yellow-400";
   }
@@ -49,7 +49,7 @@ export default function RecentTasks() {
   }, []);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+    <section className="overflow-hidden rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
       <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold text-white">Recent Tasks</h2>
@@ -72,7 +72,7 @@ export default function RecentTasks() {
           <Link
             key={task.id}
             href={`/tasks/${task.id}`}
-            className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-slate-800/50 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-cyan-400/10/50 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0">
               <p className="truncate font-medium text-white">{task.title}</p>
