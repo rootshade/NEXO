@@ -51,7 +51,15 @@ export async function getTaskAttachments(taskId: number): Promise<TaskAttachment
       const records = request.result as StoredTaskAttachment[];
       resolve(
         records
-          .map(({ blob: _blob, ...metadata }) => metadata)
+          .map((record): TaskAttachment => ({
+            id: record.id,
+            taskId: record.taskId,
+            name: record.name,
+            type: record.type,
+            size: record.size,
+            mimeType: record.mimeType,
+            createdAt: record.createdAt,
+          }))
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       );
     };
@@ -88,8 +96,15 @@ export async function saveTaskAttachment(
     transaction.objectStore(STORE_NAME).put(attachment);
     transaction.oncomplete = () => {
       database.close();
-      const { blob: _blob, ...metadata } = attachment;
-      resolve(metadata);
+      resolve({
+        id: attachment.id,
+        taskId: attachment.taskId,
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size,
+        mimeType: attachment.mimeType,
+        createdAt: attachment.createdAt,
+      });
     };
     transaction.onerror = () => {
       database.close();
