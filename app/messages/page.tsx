@@ -35,20 +35,30 @@ export default function MessagesPage() {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
 
-  // Load messages from localStorage
+  // Load messages from localStorage after the initial render
   useEffect(() => {
-    const savedMessages =
-      localStorage.getItem("nexo-messages");
+    const timer = window.setTimeout(() => {
+      const savedMessages =
+        localStorage.getItem("nexo-messages");
 
-    if (savedMessages) {
-      try {
-        setMessages(JSON.parse(savedMessages));
-      } catch {
-        localStorage.removeItem("nexo-messages");
+      if (savedMessages) {
+        try {
+          const parsedMessages: unknown = JSON.parse(savedMessages);
+
+          if (Array.isArray(parsedMessages)) {
+            setMessages(parsedMessages as Message[]);
+          } else {
+            localStorage.removeItem("nexo-messages");
+          }
+        } catch {
+          localStorage.removeItem("nexo-messages");
+        }
       }
-    }
 
-    setIsLoaded(true);
+      setIsLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   // Save messages to localStorage
