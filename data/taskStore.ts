@@ -1,6 +1,7 @@
 "use client";
 
 import { tasks as initialTasks } from "./tasks";
+import { addTaskActivity } from "./taskActivity";
 import type {
   Task,
   TaskPriority,
@@ -41,6 +42,7 @@ export function createTask(data: {
   };
 
   taskList = [newTask, ...taskList];
+  addTaskActivity(newTask.id, "task_created", `Task created: ${newTask.title}`);
 
   return newTask;
 }
@@ -49,34 +51,49 @@ export function updateTask(
   id: number,
   data: Partial<Omit<Task, "id">>
 ): Task | undefined {
-  const index = taskList.findIndex(
-    (task) => task.id === id
-  );
+  const index = taskList.findIndex((task) => task.id === id);
 
   if (index === -1) {
     return undefined;
   }
 
-  taskList[index] = {
-    ...taskList[index],
+  const previousTask = taskList[index];
+  const updatedTask = {
+    ...previousTask,
     ...data,
   };
 
-  return taskList[index];
+  taskList[index] = updatedTask;
+
+  if (data.status && data.status !== previousTask.status) {
+    addTaskActivity(
+      id,
+      "status_changed",
+      `Status changed from ${previousTask.status} to ${updatedTask.status}`
+    );
+  }
+
+  const changedFields = Object.keys(data).filter((key) => {
+    const field = key as keyof Omit<Task, "id">;
+    return data[field] !== undefined && data[field] !== previousTask[field];
+  });
+
+  if (changedFields.some((field) => field !== "status")) {
+    addTaskActivity(id, "task_updated", "Task details updated");
+  }
+
+  return updatedTask;
 }
 
 export function deleteTask(id: number): boolean {
-  const exists = taskList.some(
-    (task) => task.id === id
-  );
+  const task = taskList.find((item) => item.id === id);
 
-  if (!exists) {
+  if (!task) {
     return false;
   }
 
-  taskList = taskList.filter(
-    (task) => task.id !== id
-  );
+  addTaskActivity(id, "task_deleted", `Task deleted: ${task.title}`);
+  taskList = taskList.filter((item) => item.id !== id);
 
   return true;
 }
