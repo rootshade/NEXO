@@ -185,7 +185,7 @@ export default function TasksPage() {
             font-semibold
             text-slate-900
             transition
-            hover:bg-slate-200
+            hover:bg-cyan-200
             sm:w-auto
           "
         >
@@ -201,7 +201,7 @@ export default function TasksPage() {
           return (
             <div
               key={stat.label}
-              className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5"
+              className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 p-4 sm:p-5"
             >
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -253,7 +253,7 @@ export default function TasksPage() {
               w-full
               rounded-xl
               border
-              border-slate-800
+              border-slate-700/80
               bg-slate-900
               py-2.5
               pl-10
@@ -262,7 +262,7 @@ export default function TasksPage() {
               text-white
               outline-none
               placeholder:text-slate-600
-              focus:border-slate-600
+              focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
             "
           />
         </div>
@@ -277,7 +277,7 @@ export default function TasksPage() {
             value={sortBy}
             onChange={(event) => setSortBy(event.target.value as SortOption)}
             aria-label="Sort tasks"
-            className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-slate-600"
+            className="w-full appearance-none rounded-xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
           >
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
@@ -292,7 +292,7 @@ export default function TasksPage() {
             value={priorityFilter}
             onChange={(event) => setPriorityFilter(event.target.value as PriorityFilter)}
             aria-label="Filter by priority"
-            className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none focus:border-slate-600"
+            className="w-full rounded-xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
           >
             <option value="All">All priorities</option>
             <option value="High">High priority</option>
@@ -333,8 +333,8 @@ export default function TasksPage() {
                   transition
                   ${
                     isActive
-                      ? "bg-white text-slate-900"
-                      : "border border-slate-800 bg-slate-900 text-slate-400 hover:bg-slate-800 hover:text-white"
+                      ? "bg-cyan-300 text-slate-950"
+                      : "border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 text-slate-400 hover:bg-cyan-400/10 hover:text-cyan-200"
                   }
                 `}
               >
@@ -367,7 +367,7 @@ export default function TasksPage() {
             rounded-2xl
             border
             border-dashed
-            border-slate-800
+            border-slate-700/80
             bg-slate-900/50
             px-6
             py-16
