@@ -79,7 +79,7 @@ export default function DeleteTaskButton({
             <p className="mt-3 text-sm leading-6 text-slate-400">
               Are you sure you want to delete{" "}
               <span className="font-medium text-white">
-                "{taskTitle}"
+                &quot;{taskTitle}&quot;
               </span>
               ?
               <br />
