@@ -235,6 +235,7 @@ export default function TasksPage() {
               status={task.status}
               priority={task.priority}
               assignedTo={task.assignedTo}
+              deadline={task.deadline}
             />
           ))}
         </div>
