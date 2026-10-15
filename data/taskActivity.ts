@@ -48,6 +48,16 @@ function readAllActivities(): TaskActivity[] {
   }
 }
 
+export function getRecentTaskActivities(limit = 10): TaskActivity[] {
+  return readAllActivities()
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() -
+        new Date(a.createdAt).getTime()
+    )
+    .slice(0, limit);
+}
+
 export function getTaskActivities(taskId: number): TaskActivity[] {
   return readAllActivities()
     .filter((activity) => activity.taskId === taskId)
