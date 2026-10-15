@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, ListTodo, Clock3, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Plus, Search, ListTodo, Clock3, CheckCircle2, AlertTriangle, ArrowUpDown } from "lucide-react";
 
 import TaskCard from "@/components/tasks/TaskCard";
 import CreateTaskModal from "@/components/tasks/CreateTaskModal";
@@ -13,6 +13,8 @@ import {
 } from "@/data/taskStore";
 
 import type { Task } from "@/data/tasks";
+
+type SortOption = "newest" | "oldest" | "deadline" | "priority";
 
 type Filter =
   | "All"
@@ -40,6 +42,7 @@ export default function TasksPage() {
     useState<Filter>("All");
 
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const [isCreateModalOpen, setIsCreateModalOpen] =
     useState(false);
@@ -92,6 +95,28 @@ export default function TasksPage() {
         .includes(searchValue);
 
     return matchesFilter && matchesSearch;
+  });
+
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    if (sortBy === "deadline") {
+      const aDeadline = a.deadline ? new Date(`${a.deadline}T00:00:00`).getTime() : Number.POSITIVE_INFINITY;
+      const bDeadline = b.deadline ? new Date(`${b.deadline}T00:00:00`).getTime() : Number.POSITIVE_INFINITY;
+      const safeA = Number.isNaN(aDeadline) ? Number.POSITIVE_INFINITY : aDeadline;
+      const safeB = Number.isNaN(bDeadline) ? Number.POSITIVE_INFINITY : bDeadline;
+      return safeA - safeB;
+    }
+
+    if (sortBy === "priority") {
+      const priorityRank = { High: 3, Medium: 2, Low: 1 };
+      return priorityRank[b.priority] - priorityRank[a.priority];
+    }
+
+    const aCreated = new Date(a.createdAt).getTime();
+    const bCreated = new Date(b.createdAt).getTime();
+    const safeA = Number.isNaN(aCreated) ? 0 : aCreated;
+    const safeB = Number.isNaN(bCreated) ? 0 : bCreated;
+
+    return sortBy === "newest" ? safeB - safeA : safeA - safeB;
   });
 
   function handleCreateTask(data: {
@@ -232,6 +257,25 @@ export default function TasksPage() {
           />
         </div>
 
+        {/* Sorting */}
+        <div className="relative w-full lg:w-56">
+          <ArrowUpDown
+            size={16}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+          />
+          <select
+            value={sortBy}
+            onChange={(event) => setSortBy(event.target.value as SortOption)}
+            aria-label="Sort tasks"
+            className="w-full appearance-none rounded-xl border border-slate-800 bg-slate-900 py-2.5 pl-9 pr-3 text-sm text-white outline-none focus:border-slate-600"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="deadline">Nearest deadline</option>
+            <option value="priority">Highest priority</option>
+          </select>
+        </div>
+
         {/* Filters */}
         <div
           className="
@@ -277,9 +321,9 @@ export default function TasksPage() {
       </div>
 
       {/* Tasks */}
-      {filteredTasks.length > 0 ? (
+      {sortedTasks.length > 0 ? (
         <div className="grid gap-4">
-          {filteredTasks.map((task) => (
+          {sortedTasks.map((task) => (
             <TaskCard
               key={task.id}
               id={task.id}
