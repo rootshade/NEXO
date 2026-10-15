@@ -27,6 +27,18 @@ const STORAGE_KEY = "nexo_task_comments";
 const CURRENT_USER = "Mohammad";
 const MAX_COMMENT_LENGTH = 3000;
 
+function isTaskComment(value: unknown): value is TaskComment {
+  if (!value || typeof value !== "object") return false;
+  const comment = value as Partial<TaskComment>;
+  return (
+    typeof comment.id === "number" &&
+    typeof comment.taskId === "number" &&
+    typeof comment.author === "string" &&
+    typeof comment.message === "string" &&
+    typeof comment.createdAt === "string"
+  );
+}
+
 export default function TaskComments({ taskId }: TaskCommentsProps) {
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [message, setMessage] = useState("");
@@ -37,7 +49,8 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      const saved: TaskComment[] = raw ? JSON.parse(raw) : [];
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      const saved = Array.isArray(parsed) ? parsed.filter(isTaskComment) : [];
       const taskComments = saved.filter((comment) => comment.taskId === taskId);
 
       setComments(taskComments);
@@ -50,7 +63,8 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
 
   function saveTaskComments(nextComments: TaskComment[]) {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const saved: TaskComment[] = raw ? JSON.parse(raw) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    const saved = Array.isArray(parsed) ? parsed.filter(isTaskComment) : [];
     const otherComments = saved.filter((comment) => comment.taskId !== taskId);
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -61,7 +75,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedMessage = message.trim();
-    if (!trimmedMessage || !isLoaded) return;
+    if (!trimmedMessage || !isLoaded || trimmedMessage.length > MAX_COMMENT_LENGTH) return;
 
     const newComment: TaskComment = {
       id: Date.now(),
@@ -92,9 +106,16 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   }
 
   function handleEdit(commentId: number) {
+    const existingComment = comments.find((comment) => comment.id === commentId);
+    if (!existingComment || existingComment.author !== CURRENT_USER) return;
+
     const trimmedMessage = editingMessage.trim();
     if (!trimmedMessage) {
       window.alert("Comment cannot be empty.");
+      return;
+    }
+    if (trimmedMessage.length > MAX_COMMENT_LENGTH) {
+      window.alert(`Comment cannot exceed ${MAX_COMMENT_LENGTH} characters.`);
       return;
     }
 
