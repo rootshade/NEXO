@@ -91,6 +91,9 @@ export default function LetterDetailsPage({
           LETTERS_STORAGE_KEY,
           JSON.stringify(updatedLetters)
         );
+        window.dispatchEvent(
+          new Event("nexo-letters-updated")
+        );
 
         if (!cancelled) {
           setLetter({
