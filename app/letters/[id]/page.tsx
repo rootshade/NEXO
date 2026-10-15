@@ -18,6 +18,33 @@ type LetterDetailsPageProps = {
   params: Promise<{ id: string }>;
 };
 
+const LETTERS_STORAGE_KEY = "nexo-letters";
+
+function getLettersFromStorage(): Letter[] {
+  if (typeof window === "undefined") {
+    return initialLetters;
+  }
+
+  const savedLetters = localStorage.getItem(LETTERS_STORAGE_KEY);
+
+  if (!savedLetters) {
+    return initialLetters;
+  }
+
+  try {
+    const parsedLetters: unknown = JSON.parse(savedLetters);
+
+    if (!Array.isArray(parsedLetters)) {
+      throw new Error("Invalid letters data");
+    }
+
+    return parsedLetters as Letter[];
+  } catch {
+    localStorage.removeItem(LETTERS_STORAGE_KEY);
+    return initialLetters;
+  }
+}
+
 export default function LetterDetailsPage({
   params,
 }: LetterDetailsPageProps) {
@@ -25,34 +52,31 @@ export default function LetterDetailsPage({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function loadLetter() {
       const { id } = await params;
+      const letters = getLettersFromStorage();
+      const letterId = Number(id);
 
-      const savedLetters =
-        localStorage.getItem("nexo-letters");
-
-      let letters: Letter[] = initialLetters;
-
-      if (savedLetters) {
-        try {
-          letters = JSON.parse(savedLetters);
-        } catch {
-          localStorage.removeItem("nexo-letters");
+      if (!Number.isFinite(letterId)) {
+        if (!cancelled) {
+          setLoading(false);
         }
-      }
-
-      const foundLetter = letters.find(
-        (item) => item.id === Number(id)
-      );
-
-      if (!foundLetter) {
-        setLoading(false);
         return;
       }
 
-      /*
-       * Mark unread letter as read
-       */
+      const foundLetter = letters.find(
+        (item) => item.id === letterId
+      );
+
+      if (!foundLetter) {
+        if (!cancelled) {
+          setLoading(false);
+        }
+        return;
+      }
+
       if (foundLetter.status === "Unread") {
         const updatedLetters = letters.map((item) =>
           item.id === foundLetter.id
@@ -64,22 +88,32 @@ export default function LetterDetailsPage({
         );
 
         localStorage.setItem(
-          "nexo-letters",
+          LETTERS_STORAGE_KEY,
           JSON.stringify(updatedLetters)
         );
 
-        setLetter({
-          ...foundLetter,
-          status: "Read",
-        });
-      } else {
+        if (!cancelled) {
+          setLetter({
+            ...foundLetter,
+            status: "Read",
+          });
+        }
+      } else if (!cancelled) {
         setLetter(foundLetter);
       }
 
-      setLoading(false);
+      if (!cancelled) {
+        setLoading(false);
+      }
     }
 
-    loadLetter();
+    window.setTimeout(() => {
+      void loadLetter();
+    }, 0);
+
+    return () => {
+      cancelled = true;
+    };
   }, [params]);
 
   if (loading) {
@@ -125,7 +159,6 @@ export default function LetterDetailsPage({
   return (
     <main className="p-4 sm:p-6">
       <div className="mx-auto max-w-4xl">
-        {/* Back */}
         <Link
           href="/letters"
           className="mb-6 inline-flex items-center gap-2 text-sm text-slate-500 transition hover:text-white"
@@ -134,9 +167,7 @@ export default function LetterDetailsPage({
           Back to Letters
         </Link>
 
-        {/* Letter */}
         <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
-          {/* Header */}
           <div className="border-b border-slate-800 p-5 sm:p-7">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -170,7 +201,6 @@ export default function LetterDetailsPage({
             </div>
           </div>
 
-          {/* Sender / Receiver */}
           <div className="grid gap-4 border-b border-slate-800 p-5 sm:grid-cols-2 sm:p-7">
             <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
               <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">
@@ -195,7 +225,6 @@ export default function LetterDetailsPage({
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-5 sm:p-7">
             <div className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
               Letter Content
