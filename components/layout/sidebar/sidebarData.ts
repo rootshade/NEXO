@@ -3,6 +3,7 @@ import {
   CheckSquare,
   Mail,
   MessageSquare,
+  Users,
   Settings,
 } from "lucide-react";
 
@@ -28,8 +29,13 @@ export const sidebarItems = [
     href: "/messages",
   },
   {
+    label: "Users",
+    icon: Users,
+    href: "/users",
+  },
+  {
     label: "Settings",
     icon: Settings,
     href: "/settings",
   },
-]
+];
