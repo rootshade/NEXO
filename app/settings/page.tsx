@@ -170,15 +170,9 @@ export default function SettingsPage() {
     }
 
     /*
-     * Frontend-only simulation.
-     * Real password verification will be handled
-     * by the backend later.
+     * Password changes must be handled by the backend.
+     * Never store passwords in localStorage.
      */
-    localStorage.setItem(
-      "nexo-password",
-      newPassword
-    );
-
     setPasswordSuccess(true);
 
     setCurrentPassword("");
@@ -535,7 +529,7 @@ export default function SettingsPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-500">
-                  Update your account password.
+                  Password updates will be enabled after backend integration.
                 </p>
               </div>
 
@@ -761,7 +755,7 @@ export default function SettingsPage() {
                     />
 
                     <p className="text-sm text-emerald-400">
-                      Password changed successfully.
+                      Demo validation complete. Your password has not been changed.
                     </p>
                   </div>
                 </div>
