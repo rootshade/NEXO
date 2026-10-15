@@ -69,7 +69,7 @@ export default function RecentActivity() {
   }, []);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+    <section className="overflow-hidden rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
       <div className="border-b border-slate-800 px-5 py-4">
         <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
         <p className="mt-1 text-sm text-slate-400">
@@ -85,7 +85,7 @@ export default function RecentActivity() {
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-slate-800/50"
+                className="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-cyan-400/10/50"
               >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-300">
                   <Icon size={18} />
