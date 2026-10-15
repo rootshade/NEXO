@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CalendarDays } from "lucide-react";
 
 type TaskStatus =
   | "Pending"
@@ -17,6 +18,7 @@ type TaskCardProps = {
   status: TaskStatus;
   priority: TaskPriority;
   assignedTo: string;
+  deadline: string;
 };
 
 function getStatusStyle(status: TaskStatus) {
@@ -58,7 +60,24 @@ export default function TaskCard({
   status,
   priority,
   assignedTo,
+  deadline,
 }: TaskCardProps) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const deadlineDate = deadline ? new Date(`${deadline}T00:00:00`) : null;
+  const hasValidDeadline = deadlineDate !== null && !Number.isNaN(deadlineDate.getTime());
+  const isOverdue =
+    hasValidDeadline && status !== "Completed" && deadlineDate.getTime() < today.getTime();
+
+  const formattedDeadline = hasValidDeadline
+    ? deadlineDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "No deadline";
+
   return (
     <Link
       href={`/tasks/${id}`}
@@ -123,7 +142,18 @@ export default function TaskCard({
           {status}
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className={`flex items-center gap-2 text-sm ${isOverdue ? "text-red-400" : "text-slate-400"}`}>
+            <CalendarDays size={16} />
+            <span>{formattedDeadline}</span>
+            {isOverdue && (
+              <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
+                Overdue
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
           <div
             className="
               flex size-8
@@ -140,6 +170,7 @@ export default function TaskCard({
           <span className="text-sm text-slate-400">
             {assignedTo}
           </span>
+          </div>
         </div>
       </div>
     </Link>
