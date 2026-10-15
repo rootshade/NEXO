@@ -47,18 +47,21 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      const parsed: unknown = raw ? JSON.parse(raw) : [];
-      const saved = Array.isArray(parsed) ? parsed.filter(isTaskComment) : [];
-      const taskComments = saved.filter((comment) => comment.taskId === taskId);
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        const parsed: unknown = raw ? JSON.parse(raw) : [];
+        const saved = Array.isArray(parsed) ? parsed.filter(isTaskComment) : [];
+        const taskComments = saved.filter((comment) => comment.taskId === taskId);
+        setComments(taskComments);
+      } catch {
+        setComments([]);
+      } finally {
+        setIsLoaded(true);
+      }
+    }, 0);
 
-      setComments(taskComments);
-    } catch {
-      setComments([]);
-    } finally {
-      setIsLoaded(true);
-    }
+    return () => window.clearTimeout(timer);
   }, [taskId]);
 
   function saveTaskComments(nextComments: TaskComment[]) {
