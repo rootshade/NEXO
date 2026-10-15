@@ -54,22 +54,36 @@ export default function LettersPage() {
    * The deferred read keeps hydration deterministic in Next.js.
    */
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      const savedLetters =
-        localStorage.getItem("nexo-letters");
+    function syncLetters() {
+      try {
+        const savedLetters =
+          localStorage.getItem("nexo-letters");
 
-      if (savedLetters) {
-        try {
-          setLetters(JSON.parse(savedLetters));
-        } catch {
+        if (!savedLetters) return;
+
+        const parsedLetters: unknown = JSON.parse(savedLetters);
+
+        if (Array.isArray(parsedLetters)) {
+          setLetters(parsedLetters as Letter[]);
+        } else {
           localStorage.removeItem("nexo-letters");
         }
+      } catch {
+        localStorage.removeItem("nexo-letters");
       }
+    }
 
+    const timer = window.setTimeout(() => {
+      syncLetters();
       setIsLoaded(true);
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    window.addEventListener("nexo-letters-updated", syncLetters);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("nexo-letters-updated", syncLetters);
+    };
   }, []);
 
   /*
