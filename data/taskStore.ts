@@ -60,10 +60,11 @@ export function loadTasks(): Task[] {
 }
 
 export function getTasks(): Task[] {
-  return [...taskList];
+  return typeof window === "undefined" ? [...taskList] : loadTasks();
 }
 
 export function getTaskById(id: number): Task | undefined {
+  if (typeof window !== "undefined") loadTasks();
   return taskList.find((task) => task.id === id);
 }
 
@@ -74,6 +75,10 @@ export function createTask(data: {
   assignedTo: string;
   deadline: string;
 }): Task {
+  // Re-read browser storage before every write so stale in-memory state
+  // cannot overwrite tasks saved by a previous page render.
+  if (typeof window !== "undefined") loadTasks();
+
   const newId =
     taskList.length > 0
       ? Math.max(...taskList.map((task) => task.id)) + 1
@@ -101,6 +106,7 @@ export function updateTask(
   id: number,
   data: Partial<Omit<Task, "id">>
 ): Task | undefined {
+  if (typeof window !== "undefined") loadTasks();
   const index = taskList.findIndex((task) => task.id === id);
   if (index === -1) return undefined;
 
@@ -130,6 +136,7 @@ export function updateTask(
 }
 
 export function deleteTask(id: number): boolean {
+  if (typeof window !== "undefined") loadTasks();
   const task = taskList.find((item) => item.id === id);
   if (!task) return false;
 
