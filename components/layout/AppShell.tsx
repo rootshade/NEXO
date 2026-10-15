@@ -29,7 +29,7 @@ export default function AppShell({
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(ellipse_at_top_left,rgba(79,70,229,0.12),transparent_35%),radial-gradient(ellipse_at_top_right,rgba(6,182,212,0.08),transparent_30%),#070b16]">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -41,7 +41,7 @@ export default function AppShell({
           onMenuClick={() => setSidebarOpen(true)}
         />
 
-        <main className="p-4 sm:p-6">
+        <main className="relative min-h-[calc(100vh-4rem)] p-4 sm:p-6">
           {children}
         </main>
       </div>
