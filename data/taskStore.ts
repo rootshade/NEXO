@@ -8,10 +8,59 @@ import type {
   TaskStatus,
 } from "./tasks";
 
+const STORAGE_KEY = "nexo_tasks";
 let taskList: Task[] = [...initialTasks];
 
+function isTask(value: unknown): value is Task {
+  if (!value || typeof value !== "object") return false;
+  const task = value as Partial<Task>;
+  return (
+    typeof task.id === "number" &&
+    typeof task.title === "string" &&
+    typeof task.description === "string" &&
+    (task.status === "Pending" || task.status === "In Progress" || task.status === "Completed") &&
+    (task.priority === "Low" || task.priority === "Medium" || task.priority === "High") &&
+    typeof task.assignedTo === "string" &&
+    typeof task.createdAt === "string" &&
+    typeof task.deadline === "string"
+  );
+}
+
+function persistTasks(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList));
+  } catch (error) {
+    console.error("Unable to save NEXO tasks:", error);
+  }
+}
+
+/** Load saved tasks once the app is running in the browser. */
+export function loadTasks(): Task[] {
+  if (typeof window === "undefined") return taskList;
+
+  try {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved !== null) {
+      const parsed: unknown = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.every(isTask)) {
+        taskList = parsed;
+        return [...taskList];
+      }
+      console.warn("Saved NEXO tasks had an invalid format; using defaults.");
+    }
+    taskList = [...initialTasks];
+    persistTasks();
+  } catch (error) {
+    console.error("Unable to load NEXO tasks:", error);
+    taskList = [...initialTasks];
+  }
+
+  return [...taskList];
+}
+
 export function getTasks(): Task[] {
-  return taskList;
+  return [...taskList];
 }
 
 export function getTaskById(id: number): Task | undefined {
@@ -42,6 +91,7 @@ export function createTask(data: {
   };
 
   taskList = [newTask, ...taskList];
+  persistTasks();
   addTaskActivity(newTask.id, "task_created", `Task created: ${newTask.title}`);
 
   return newTask;
@@ -52,18 +102,12 @@ export function updateTask(
   data: Partial<Omit<Task, "id">>
 ): Task | undefined {
   const index = taskList.findIndex((task) => task.id === id);
-
-  if (index === -1) {
-    return undefined;
-  }
+  if (index === -1) return undefined;
 
   const previousTask = taskList[index];
-  const updatedTask = {
-    ...previousTask,
-    ...data,
-  };
-
+  const updatedTask = { ...previousTask, ...data };
   taskList[index] = updatedTask;
+  persistTasks();
 
   if (data.status && data.status !== previousTask.status) {
     addTaskActivity(
@@ -87,14 +131,11 @@ export function updateTask(
 
 export function deleteTask(id: number): boolean {
   const task = taskList.find((item) => item.id === id);
-
-  if (!task) {
-    return false;
-  }
+  if (!task) return false;
 
   addTaskActivity(id, "task_deleted", `Task deleted: ${task.title}`);
   taskList = taskList.filter((item) => item.id !== id);
-
+  persistTasks();
   return true;
 }
 
