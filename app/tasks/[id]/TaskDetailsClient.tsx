@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
 
 import {
   getTaskById,
+  loadTasks,
   updateTask,
   deleteTask,
 } from "@/data/taskStore";
@@ -67,6 +68,17 @@ export default function TaskDetailsClient({
   const [task, setTask] = useState<Task | undefined>(() =>
     getTaskById(id)
   );
+
+  useEffect(() => {
+    const savedTask = loadTasks().find((item) => item.id === id);
+    setTask(savedTask);
+    setTitle(savedTask?.title ?? "");
+    setDescription(savedTask?.description ?? "");
+    setPriority(savedTask?.priority ?? "Medium");
+    setStatus(savedTask?.status ?? "Pending");
+    setAssignedTo(savedTask?.assignedTo ?? "");
+    setDeadline(savedTask?.deadline ?? "");
+  }, [id]);
 
   const [isEditing, setIsEditing] = useState(false);
 
