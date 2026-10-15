@@ -19,12 +19,30 @@ const STORAGE_KEY = "nexo_task_activity";
 export const TASK_ACTIVITY_EVENT = "nexo-task-activity-updated";
 const CURRENT_USER = "Mohammad";
 
+function isTaskActivity(value: unknown): value is TaskActivity {
+  if (!value || typeof value !== "object") return false;
+  const activity = value as Partial<TaskActivity>;
+  return (
+    typeof activity.id === "number" &&
+    typeof activity.taskId === "number" &&
+    (activity.type === "task_created" ||
+      activity.type === "task_updated" ||
+      activity.type === "status_changed" ||
+      activity.type === "task_deleted") &&
+    typeof activity.actor === "string" &&
+    typeof activity.message === "string" &&
+    typeof activity.createdAt === "string"
+  );
+}
+
 function readAllActivities(): TaskActivity[] {
   if (typeof window === "undefined") return [];
 
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as TaskActivity[]) : [];
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isTaskActivity) : [];
   } catch {
     return [];
   }
@@ -49,7 +67,7 @@ export function addTaskActivity(
   if (typeof window === "undefined") return undefined;
 
   const activity: TaskActivity = {
-    id: Date.now(),
+    id: Math.max(Date.now(), ...readAllActivities().map((item) => item.id + 1)),
     taskId,
     type,
     actor,
