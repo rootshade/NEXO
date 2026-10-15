@@ -22,6 +22,7 @@ import type {
   TaskStatus,
 } from "@/data/tasks";
 import TaskComments from "@/components/tasks/TaskComments";
+import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 
 type TaskDetailsClientProps = {
   id: number;
@@ -596,6 +597,7 @@ export default function TaskDetailsClient({
         )}
       </div>
 
+      <TaskActivityLog taskId={task.id} />
       <TaskComments taskId={task.id} />
     </div>
   );
