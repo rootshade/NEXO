@@ -27,7 +27,7 @@ function getStatusStyle(status: TaskStatus) {
       return "bg-green-500/10 text-green-400";
 
     case "In Progress":
-      return "bg-blue-500/10 text-blue-400";
+      return "bg-sky-400/10 text-sky-300";
 
     case "Pending":
       return "bg-yellow-500/10 text-yellow-400";
@@ -89,8 +89,8 @@ export default function TaskCard({
         p-5
         transition-all
         duration-200
-        hover:border-slate-700
-        hover:bg-slate-800/70
+        hover:border-cyan-400/30
+        hover:bg-cyan-400/10/70
       "
     >
       {/* Top */}
