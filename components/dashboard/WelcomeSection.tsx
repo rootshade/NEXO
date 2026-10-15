@@ -1,24 +1,3 @@
-import {
-  CheckSquare,
-  Mail,
-  MessageSquare,
-} from "lucide-react";
-
-const actions = [
-  {
-    label: "Create Task",
-    icon: CheckSquare,
-  },
-  {
-    label: "Write Letter",
-    icon: Mail,
-  },
-  {
-    label: "New Message",
-    icon: MessageSquare,
-  },
-];
-
 export default function WelcomeSection() {
   return (
     <section
@@ -44,7 +23,6 @@ export default function WelcomeSection() {
             Here’s what’s happening in your workspace today.
           </p>
         </div>
-        
       </div>
     </section>
   );
