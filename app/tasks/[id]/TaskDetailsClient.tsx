@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Calendar,
@@ -68,18 +69,6 @@ export default function TaskDetailsClient({
   const [task, setTask] = useState<Task | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const savedTask = loadTasks().find((item) => item.id === id);
-    setTask(savedTask);
-    setTitle(savedTask?.title ?? "");
-    setDescription(savedTask?.description ?? "");
-    setPriority(savedTask?.priority ?? "Medium");
-    setStatus(savedTask?.status ?? "Pending");
-    setAssignedTo(savedTask?.assignedTo ?? "");
-    setDeadline(savedTask?.deadline ?? "");
-    setIsLoading(false);
-  }, [id]);
-
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState("");
 
@@ -108,6 +97,24 @@ export default function TaskDetailsClient({
   const [deadline, setDeadline] = useState(
     task?.deadline ?? ""
   );
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const savedTask = loadTasks().find((item) => item.id === id);
+      setTask(savedTask);
+      setTitle(savedTask?.title ?? "");
+      setDescription(savedTask?.description ?? "");
+      setPriority(savedTask?.priority ?? "Medium");
+      setStatus(savedTask?.status ?? "Pending");
+      setAssignedTo(savedTask?.assignedTo ?? "");
+      setDeadline(savedTask?.deadline ?? "");
+      setIsLoading(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -231,7 +238,7 @@ export default function TaskDetailsClient({
 
     if (deleted) {
       await cleanupTaskData(id);
-      window.location.href = "/tasks";
+      router.push("/tasks");
     }
   }
 
