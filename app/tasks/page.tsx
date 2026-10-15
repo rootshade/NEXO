@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, ListTodo, Clock3, CheckCircle2, AlertTriangle } from "lucide-react";
 
 import TaskCard from "@/components/tasks/TaskCard";
 import CreateTaskModal from "@/components/tasks/CreateTaskModal";
@@ -44,10 +44,23 @@ export default function TasksPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] =
     useState(false);
 
-  const filteredTasks = tasks.filter((task) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
+  const overdueTasksCount = tasks.filter((task) => {
+    if (!task.deadline || task.status === "Completed") return false;
+    const deadlineDate = new Date(`${task.deadline}T00:00:00`);
+    return !Number.isNaN(deadlineDate.getTime()) && deadlineDate.getTime() < today.getTime();
+  }).length;
+
+  const taskStats = [
+    { label: "Total Tasks", value: tasks.length, icon: ListTodo, iconStyle: "bg-slate-500/10 text-slate-300" },
+    { label: "In Progress", value: tasks.filter((task) => task.status === "In Progress").length, icon: Clock3, iconStyle: "bg-blue-500/10 text-blue-400" },
+    { label: "Completed", value: tasks.filter((task) => task.status === "Completed").length, icon: CheckCircle2, iconStyle: "bg-green-500/10 text-green-400" },
+    { label: "Overdue", value: overdueTasksCount, icon: AlertTriangle, iconStyle: "bg-red-500/10 text-red-400" },
+  ];
+
+  const filteredTasks = tasks.filter((task) => {
     const deadlineDate = task.deadline
       ? new Date(`${task.deadline}T00:00:00`)
       : null;
@@ -144,6 +157,29 @@ export default function TasksPage() {
           <Plus size={18} />
           Add Task
         </button>
+      </div>
+
+      {/* Task Statistics */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {taskStats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className="rounded-2xl border border-slate-800 bg-slate-900 p-4 sm:p-5"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-slate-400">{stat.label}</p>
+                  <p className="mt-2 text-2xl font-bold text-white">{stat.value}</p>
+                </div>
+                <div className={`flex size-11 items-center justify-center rounded-xl ${stat.iconStyle}`}>
+                  <Icon size={21} />
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Search + Filters */}
