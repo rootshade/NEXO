@@ -75,7 +75,11 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
   }, [taskId]);
 
   useEffect(() => {
-    void refreshAttachments();
+    const timer = window.setTimeout(() => {
+      void refreshAttachments();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [refreshAttachments]);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
