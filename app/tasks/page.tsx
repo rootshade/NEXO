@@ -15,6 +15,7 @@ import {
 import type { Task } from "@/data/tasks";
 
 type SortOption = "newest" | "oldest" | "deadline" | "priority";
+type PriorityFilter = "All" | "Low" | "Medium" | "High";
 
 type Filter =
   | "All"
@@ -43,6 +44,7 @@ export default function TasksPage() {
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("All");
 
   const [isCreateModalOpen, setIsCreateModalOpen] =
     useState(false);
@@ -83,6 +85,9 @@ export default function TasksPage() {
     const searchValue =
       search.toLowerCase().trim();
 
+    const matchesPriority =
+      priorityFilter === "All" || task.priority === priorityFilter;
+
     const matchesSearch =
       task.title
         .toLowerCase()
@@ -92,9 +97,10 @@ export default function TasksPage() {
         .includes(searchValue) ||
       task.assignedTo
         .toLowerCase()
-        .includes(searchValue);
+        .includes(searchValue) ||
+      (task.deadline ?? "").toLowerCase().includes(searchValue);
 
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesPriority && matchesSearch;
   });
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -273,6 +279,21 @@ export default function TasksPage() {
             <option value="oldest">Oldest first</option>
             <option value="deadline">Nearest deadline</option>
             <option value="priority">Highest priority</option>
+          </select>
+        </div>
+
+        {/* Priority filter */}
+        <div className="w-full lg:w-44">
+          <select
+            value={priorityFilter}
+            onChange={(event) => setPriorityFilter(event.target.value as PriorityFilter)}
+            aria-label="Filter by priority"
+            className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2.5 text-sm text-white outline-none focus:border-slate-600"
+          >
+            <option value="All">All priorities</option>
+            <option value="High">High priority</option>
+            <option value="Medium">Medium priority</option>
+            <option value="Low">Low priority</option>
           </select>
         </div>
 
