@@ -50,21 +50,26 @@ export default function LettersPage() {
   const [error, setError] = useState("");
 
   /*
-   * Load letters from localStorage
+   * Load letters from localStorage after the initial render.
+   * The deferred read keeps hydration deterministic in Next.js.
    */
   useEffect(() => {
-    const savedLetters =
-      localStorage.getItem("nexo-letters");
+    const timer = window.setTimeout(() => {
+      const savedLetters =
+        localStorage.getItem("nexo-letters");
 
-    if (savedLetters) {
-      try {
-        setLetters(JSON.parse(savedLetters));
-      } catch {
-        localStorage.removeItem("nexo-letters");
+      if (savedLetters) {
+        try {
+          setLetters(JSON.parse(savedLetters));
+        } catch {
+          localStorage.removeItem("nexo-letters");
+        }
       }
-    }
 
-    setIsLoaded(true);
+      setIsLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   /*
