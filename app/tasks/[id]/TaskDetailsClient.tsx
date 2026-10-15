@@ -81,6 +81,7 @@ export default function TaskDetailsClient({
   }, [id]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState("");
 
   const [title, setTitle] = useState(
     task?.title ?? ""
@@ -146,7 +147,51 @@ export default function TaskDetailsClient({
     );
   }
 
+  function handleCancelEdit() {
+    setTitle(task?.title ?? "");
+    setDescription(task?.description ?? "");
+    setPriority(task?.priority ?? "Medium");
+    setStatus(task?.status ?? "Pending");
+    setAssignedTo(task?.assignedTo ?? "");
+    setDeadline(task?.deadline ?? "");
+    setEditError("");
+    setIsEditing(false);
+  }
+
   function handleSave() {
+    setEditError("");
+
+    if (
+      !title.trim() ||
+      !description.trim() ||
+      !assignedTo.trim() ||
+      !deadline
+    ) {
+      setEditError("Please complete all required fields.");
+      return;
+    }
+
+    if (title.trim().length > 100) {
+      setEditError("Task title cannot exceed 100 characters.");
+      return;
+    }
+
+    if (description.trim().length > 2000) {
+      setEditError("Description cannot exceed 2000 characters.");
+      return;
+    }
+
+    if (assignedTo.trim().length > 100) {
+      setEditError("Assignee name cannot exceed 100 characters.");
+      return;
+    }
+
+    const selectedDate = new Date(`${deadline}T00:00:00`);
+    if (Number.isNaN(selectedDate.getTime())) {
+      setEditError("Please select a valid deadline.");
+      return;
+    }
+
     const updatedTask = updateTask(id, {
       title: title.trim(),
       description: description.trim(),
@@ -157,6 +202,7 @@ export default function TaskDetailsClient({
     });
 
     if (!updatedTask) {
+      setEditError("Unable to save changes. Please try again.");
       return;
     }
 
@@ -216,9 +262,14 @@ export default function TaskDetailsClient({
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() =>
-                setIsEditing((current) => !current)
-              }
+              onClick={() => {
+                if (isEditing) {
+                  handleCancelEdit();
+                } else {
+                  setEditError("");
+                  setIsEditing(true);
+                }
+              }}
               className="
                 inline-flex
                 items-center
@@ -291,9 +342,12 @@ export default function TaskDetailsClient({
               <input
                 type="text"
                 value={title}
-                onChange={(event) =>
-                  setTitle(event.target.value)
-                }
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                  setEditError("");
+                }}
+                maxLength={100}
+                required
                 className="
                   w-full
                   rounded-xl
@@ -318,10 +372,13 @@ export default function TaskDetailsClient({
 
               <textarea
                 value={description}
-                onChange={(event) =>
-                  setDescription(event.target.value)
-                }
+                onChange={(event) => {
+                  setDescription(event.target.value);
+                  setEditError("");
+                }}
                 rows={5}
+                maxLength={2000}
+                required
                 className="
                   w-full
                   resize-none
@@ -423,9 +480,12 @@ export default function TaskDetailsClient({
                 <input
                   type="text"
                   value={assignedTo}
-                  onChange={(event) =>
-                    setAssignedTo(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setAssignedTo(event.target.value);
+                    setEditError("");
+                  }}
+                  maxLength={100}
+                  required
                   className="
                     w-full
                     rounded-xl
@@ -449,9 +509,11 @@ export default function TaskDetailsClient({
                 <input
                   type="date"
                   value={deadline}
-                  onChange={(event) =>
-                    setDeadline(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setDeadline(event.target.value);
+                    setEditError("");
+                  }}
+                  required
                   className="
                     w-full
                     rounded-xl
@@ -467,6 +529,15 @@ export default function TaskDetailsClient({
                 />
               </div>
             </div>
+
+            {editError && (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+              >
+                {editError}
+              </div>
+            )}
 
             {/* Save */}
             <div className="flex justify-end">
