@@ -74,6 +74,8 @@ export default function MessageDetailsPage({
           JSON.stringify(updatedMessages)
         );
 
+        window.dispatchEvent(new Event("nexo-messages-updated"));
+
         setMessage({
           ...foundMessage,
           status: "Read",
@@ -197,7 +199,7 @@ export default function MessageDetailsPage({
                     text-slate-200
                   "
                 >
-                  Read
+                  {message.status}
                 </span>
               </div>
 
