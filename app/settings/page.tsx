@@ -60,16 +60,44 @@ export default function SettingsPage() {
     useState(false);
 
   useEffect(() => {
-    const savedSettings =
-      localStorage.getItem("nexo-settings");
+    const timer = window.setTimeout(() => {
+      const savedSettings =
+        localStorage.getItem("nexo-settings");
 
-    if (savedSettings) {
+      if (!savedSettings) {
+        return;
+      }
+
       try {
-        setSettings(JSON.parse(savedSettings));
+        const parsed: unknown = JSON.parse(savedSettings);
+
+        if (
+          typeof parsed === "object" &&
+          parsed !== null &&
+          "fullName" in parsed &&
+          "email" in parsed &&
+          "language" in parsed &&
+          "notifications" in parsed &&
+          typeof parsed.fullName === "string" &&
+          typeof parsed.email === "string" &&
+          typeof parsed.language === "string" &&
+          typeof parsed.notifications === "boolean"
+        ) {
+          setSettings({
+            fullName: parsed.fullName,
+            email: parsed.email,
+            language: parsed.language,
+            notifications: parsed.notifications,
+          });
+        } else {
+          localStorage.removeItem("nexo-settings");
+        }
       } catch {
         localStorage.removeItem("nexo-settings");
       }
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   function handleChange(
