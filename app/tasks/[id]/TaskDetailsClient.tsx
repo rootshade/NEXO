@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import {
-  getTaskById,
   loadTasks,
   updateTask,
   deleteTask,
@@ -66,9 +65,8 @@ function getPriorityStyle(priority: TaskPriority) {
 export default function TaskDetailsClient({
   id,
 }: TaskDetailsClientProps) {
-  const [task, setTask] = useState<Task | undefined>(() =>
-    getTaskById(id)
-  );
+  const [task, setTask] = useState<Task | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const savedTask = loadTasks().find((item) => item.id === id);
@@ -79,6 +77,7 @@ export default function TaskDetailsClient({
     setStatus(savedTask?.status ?? "Pending");
     setAssignedTo(savedTask?.assignedTo ?? "");
     setDeadline(savedTask?.deadline ?? "");
+    setIsLoading(false);
   }, [id]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -109,6 +108,14 @@ export default function TaskDetailsClient({
   const [deadline, setDeadline] = useState(
     task?.deadline ?? ""
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-sm text-slate-400">Loading task...</p>
+      </div>
+    );
+  }
 
   if (!task) {
     return (
