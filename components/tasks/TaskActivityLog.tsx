@@ -34,10 +34,11 @@ export default function TaskActivityLog({ taskId }: TaskActivityLogProps) {
   }, [taskId]);
 
   useEffect(() => {
-    refreshActivities();
+    const timer = window.setTimeout(refreshActivities, 0);
     window.addEventListener(TASK_ACTIVITY_EVENT, refreshActivities);
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener(TASK_ACTIVITY_EVENT, refreshActivities);
     };
   }, [refreshActivities]);
