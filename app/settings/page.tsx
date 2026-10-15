@@ -198,8 +198,8 @@ export default function SettingsPage() {
       </div>
 
       {/* Profile */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900">
-        <div className="border-b border-slate-800 px-6 py-5">
+      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
+        <div className="border-b border-slate-700/80 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-slate-800 p-2.5">
               <User
@@ -243,13 +243,13 @@ export default function SettingsPage() {
               className="
                 w-full
                 rounded-xl
-                border border-slate-800
+                border border-slate-700/80
                 bg-slate-950
                 px-4 py-3
                 text-sm text-white
                 outline-none
                 transition
-                focus:border-slate-600
+                focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
               "
             />
           </div>
@@ -276,13 +276,13 @@ export default function SettingsPage() {
               className="
                 w-full
                 rounded-xl
-                border border-slate-800
+                border border-slate-700/80
                 bg-slate-950
                 px-4 py-3
                 text-sm text-white
                 outline-none
                 transition
-                focus:border-slate-600
+                focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
               "
             />
           </div>
@@ -290,8 +290,8 @@ export default function SettingsPage() {
       </section>
 
       {/* Preferences */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900">
-        <div className="border-b border-slate-800 px-6 py-5">
+      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
+        <div className="border-b border-slate-700/80 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-slate-800 p-2.5">
               <Bell
@@ -335,12 +335,12 @@ export default function SettingsPage() {
               }
               className="
                 rounded-xl
-                border border-slate-800
+                border border-slate-700/80
                 bg-slate-950
                 px-4 py-2.5
                 text-sm text-white
                 outline-none
-                focus:border-slate-600
+                focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
               "
             >
               <option>English</option>
@@ -349,7 +349,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Notifications */}
-          <div className="flex items-center justify-between gap-4 border-t border-slate-800 pt-5">
+          <div className="flex items-center justify-between gap-4 border-t border-slate-700/80 pt-5">
             <div className="flex items-center gap-3">
               <Bell
                 size={18}
@@ -409,8 +409,8 @@ export default function SettingsPage() {
       </section>
 
       {/* Security */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900">
-        <div className="border-b border-slate-800 px-6 py-5">
+      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
+        <div className="border-b border-slate-700/80 px-6 py-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-slate-800 p-2.5">
               <Lock
@@ -488,7 +488,7 @@ export default function SettingsPage() {
             font-semibold
             text-slate-950
             transition
-            hover:bg-slate-200
+            hover:bg-cyan-200
           "
         >
           <Save size={17} />
@@ -516,13 +516,13 @@ export default function SettingsPage() {
             className="
               w-full max-w-md
               rounded-2xl
-              border border-slate-800
+              border border-slate-700/80
               bg-slate-900
               shadow-2xl
             "
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-slate-700/80 px-6 py-5">
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   Change Password
@@ -578,12 +578,12 @@ export default function SettingsPage() {
                     className="
                       w-full
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3 pr-11
                       text-sm text-white
                       outline-none
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
 
@@ -638,12 +638,12 @@ export default function SettingsPage() {
                     className="
                       w-full
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3 pr-11
                       text-sm text-white
                       outline-none
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
 
@@ -702,12 +702,12 @@ export default function SettingsPage() {
                     className="
                       w-full
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3 pr-11
                       text-sm text-white
                       outline-none
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
 
@@ -763,7 +763,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-800 px-6 py-5 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-700/80 px-6 py-5 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={closePasswordModal}
@@ -794,7 +794,7 @@ export default function SettingsPage() {
                   font-semibold
                   text-slate-950
                   transition
-                  hover:bg-slate-200
+                  hover:bg-cyan-200
                   disabled:cursor-not-allowed
                   disabled:opacity-50
                 "
