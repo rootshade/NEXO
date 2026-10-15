@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { updateTaskStatus } from "@/data/taskStore";
 
 type TaskStatus =
   | "Pending"
@@ -46,58 +47,24 @@ export default function TaskStatusControl({
 
   const [selectedStatus, setSelectedStatus] =
     useState<TaskStatus>(initialStatus);
+  const [error, setError] = useState("");
 
 function handleSave() {
-  const savedTasks = JSON.parse(
-    localStorage.getItem("nexo_tasks") || "[]"
-  );
+  setError("");
+  const updatedTask = updateTaskStatus(taskId, selectedStatus);
 
-  const updatedTask = {
-    id: taskId,
-    status: selectedStatus,
-  };
-
-  const existingTaskIndex =
-    savedTasks.findIndex(
-      (task: { id: number }) =>
-        task.id === taskId
-    );
-
-  let updatedTasks;
-
-  if (existingTaskIndex === -1) {
-    updatedTasks = [
-      ...savedTasks,
-      updatedTask,
-    ];
-  } else {
-    updatedTasks = savedTasks.map(
-      (
-        task: {
-          id: number;
-          status: TaskStatus;
-          [key: string]: unknown;
-        }
-      ) =>
-        task.id === taskId
-          ? {
-              ...task,
-              status: selectedStatus,
-            }
-          : task
-    );
+  if (!updatedTask) {
+    setError("This task could not be found. Refresh the page and try again.");
+    return;
   }
 
-  localStorage.setItem(
-    "nexo_tasks",
-    JSON.stringify(updatedTasks)
-  );
-
-  setStatus(selectedStatus);
+  setStatus(updatedTask.status);
+  setSelectedStatus(updatedTask.status);
   setIsEditing(false);
 }
 
 function handleCancel() {
+  setError("");
   setSelectedStatus(status);
   setIsEditing(false);
 }
@@ -208,6 +175,7 @@ function handleCancel() {
           </div>
         )}
       </div>
+      {error && <p role="alert" className="mt-3 text-sm text-red-400">{error}</p>}
     </div>
   );
 }
