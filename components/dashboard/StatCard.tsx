@@ -4,22 +4,15 @@ type StatCardProps = {
   title: string;
   value: number;
   icon: LucideIcon;
-  change: string;
-  changeType: "positive" | "negative";
+  description: string;
 };
 
 export default function StatCard({
   title,
   value,
   icon: Icon,
-  change,
-  changeType,
+  description,
 }: StatCardProps) {
-  const changeColor =
-    changeType === "positive"
-      ? "text-green-400"
-      : "text-red-400";
-
   return (
     <div
       className="
@@ -35,7 +28,6 @@ export default function StatCard({
         hover:bg-slate-800
       "
     >
-      {/* Top */}
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-slate-400">
           {title}
@@ -58,23 +50,15 @@ export default function StatCard({
         </div>
       </div>
 
-      {/* Value */}
       <div className="mt-5">
         <p className="text-3xl font-bold tracking-tight text-white">
           {value}
         </p>
       </div>
 
-      {/* Change */}
-      <div className="mt-3 flex items-center gap-2">
-        <span className={`text-sm font-medium ${changeColor}`}>
-          {change}
-        </span>
-
-        <span className="text-xs text-slate-500">
-          from last month
-        </span>
-      </div>
+      <p className="mt-3 text-xs text-slate-500">
+        {description}
+      </p>
     </div>
   );
 }
