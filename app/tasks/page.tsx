@@ -18,13 +18,15 @@ type Filter =
   | "All"
   | "Pending"
   | "In Progress"
-  | "Completed";
+  | "Completed"
+  | "Overdue";
 
 const filters: Filter[] = [
   "All",
   "Pending",
   "In Progress",
   "Completed",
+  "Overdue",
 ];
 
 export default function TasksPage() {
@@ -43,9 +45,24 @@ export default function TasksPage() {
     useState(false);
 
   const filteredTasks = tasks.filter((task) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const deadlineDate = task.deadline
+      ? new Date(`${task.deadline}T00:00:00`)
+      : null;
+
+    const isOverdue =
+      deadlineDate !== null &&
+      !Number.isNaN(deadlineDate.getTime()) &&
+      deadlineDate.getTime() < today.getTime() &&
+      task.status !== "Completed";
+
     const matchesFilter =
       activeFilter === "All" ||
-      task.status === activeFilter;
+      (activeFilter === "Overdue"
+        ? isOverdue
+        : task.status === activeFilter);
 
     const searchValue =
       search.toLowerCase().trim();
