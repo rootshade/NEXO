@@ -25,6 +25,16 @@ type TaskAttachmentsProps = {
 };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = [".pdf", ".doc", ".docx", ".txt"];
+
+function isSupportedAttachment(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return (
+    file.type.startsWith("image/") ||
+    file.type.startsWith("audio/") ||
+    ALLOWED_EXTENSIONS.some((extension) => name.endsWith(extension))
+  );
+}
 
 function formatFileSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -72,6 +82,12 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
     const input = event.currentTarget;
     const file = input.files?.[0];
     if (!file) return;
+
+    if (!isSupportedAttachment(file)) {
+      setError("Unsupported file type. Choose an image, audio file, PDF, DOC, DOCX, or TXT.");
+      input.value = "";
+      return;
+    }
 
     if (file.size > MAX_FILE_SIZE) {
       setError("File is too large. Maximum file size is 10 MB.");
@@ -127,7 +143,7 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       setError("Could not open this attachment. Please try again.");
     } finally {
