@@ -192,7 +192,7 @@ export default function MessagesPage() {
             text-sm font-semibold
             text-slate-950
             transition-colors
-            hover:bg-slate-200
+            hover:bg-cyan-200
           "
         >
           <Plus size={18} />
@@ -218,7 +218,7 @@ export default function MessagesPage() {
               max-h-[90vh]
               overflow-y-auto
               rounded-2xl
-              border border-slate-800
+              border border-slate-700/80
               bg-slate-900
               shadow-2xl
             "
@@ -230,7 +230,7 @@ export default function MessagesPage() {
             <div
               className="
                 flex items-center justify-between
-                border-b border-slate-800
+                border-b border-slate-700/80
                 px-6 py-5
               "
             >
@@ -281,13 +281,13 @@ export default function MessagesPage() {
                     className="
                       w-full
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3
                       text-sm text-white
                       outline-none
                       placeholder:text-slate-600
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
                 </div>
@@ -308,13 +308,13 @@ export default function MessagesPage() {
                     className="
                       w-full
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3
                       text-sm text-white
                       outline-none
                       placeholder:text-slate-600
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
                 </div>
@@ -336,13 +336,13 @@ export default function MessagesPage() {
                       w-full
                       resize-none
                       rounded-xl
-                      border border-slate-800
+                      border border-slate-700/80
                       bg-slate-950
                       px-4 py-3
                       text-sm leading-6 text-white
                       outline-none
                       placeholder:text-slate-600
-                      focus:border-slate-600
+                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
                     "
                   />
                 </div>
@@ -361,7 +361,7 @@ export default function MessagesPage() {
                   onClick={handleCloseModal}
                   className="
                     rounded-xl
-                    border border-slate-800
+                    border border-slate-700/80
                     px-5 py-2.5
                     text-sm font-medium
                     text-slate-400
@@ -388,7 +388,7 @@ export default function MessagesPage() {
                     text-sm font-semibold
                     text-slate-950
                     transition-colors
-                    hover:bg-slate-200
+                    hover:bg-cyan-200
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
@@ -422,14 +422,14 @@ export default function MessagesPage() {
           className="
             w-full
             rounded-xl
-            border border-slate-800
+            border border-slate-700/80
             bg-slate-900
             py-3 pl-11 pr-4
             text-sm text-white
             outline-none
             placeholder:text-slate-500
             transition-colors
-            focus:border-slate-600
+            focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
           "
         />
       </div>
@@ -456,7 +456,7 @@ export default function MessagesPage() {
                 ${
                   active
                     ? "bg-slate-700 text-white"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    : "text-slate-400 hover:bg-cyan-400/10 hover:text-cyan-200"
                 }
               `}
             >
@@ -474,7 +474,7 @@ export default function MessagesPage() {
             href={`/messages/${message.id}`}
             className="
               rounded-2xl
-              border border-slate-800
+              border border-slate-700/80
               bg-slate-900
               p-5
               transition-colors
@@ -555,7 +555,7 @@ export default function MessagesPage() {
           className="
             rounded-2xl
             border border-dashed
-            border-slate-800
+            border-slate-700/80
             bg-slate-900/50
             px-6 py-12
             text-center
