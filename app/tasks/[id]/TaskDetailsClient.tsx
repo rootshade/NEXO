@@ -25,6 +25,7 @@ import type {
 import TaskComments from "@/components/tasks/TaskComments";
 import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 import TaskAttachments from "@/components/tasks/TaskAttachments";
+import { cleanupTaskData } from "@/data/taskCleanup";
 
 type TaskDetailsClientProps = {
   id: number;
@@ -210,9 +211,9 @@ export default function TaskDetailsClient({
     setIsEditing(false);
   }
 
-  function handleDelete() {
+  async function handleDelete() {
     const confirmed = window.confirm(
-      "Are you sure you want to delete this task?"
+      "Are you sure you want to delete this task? Its comments and attachments will also be removed."
     );
 
     if (!confirmed) {
@@ -222,6 +223,7 @@ export default function TaskDetailsClient({
     const deleted = deleteTask(id);
 
     if (deleted) {
+      await cleanupTaskData(id);
       window.location.href = "/tasks";
     }
   }
