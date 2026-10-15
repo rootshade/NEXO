@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 
 import TaskCard from "@/components/tasks/TaskCard";
@@ -8,6 +8,7 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 
 import {
   getTasks,
+  loadTasks,
   createTask,
 } from "@/data/taskStore";
 
@@ -27,9 +28,11 @@ const filters: Filter[] = [
 ];
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(
-    getTasks()
-  );
+  const [tasks, setTasks] = useState<Task[]>(getTasks());
+
+  useEffect(() => {
+    setTasks(loadTasks());
+  }, []);
 
   const [activeFilter, setActiveFilter] =
     useState<Filter>("All");
