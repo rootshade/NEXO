@@ -61,6 +61,35 @@ export default function MessagesPage() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  // Keep the list in sync when a message is opened or marked as read.
+  useEffect(() => {
+    function handleMessagesUpdated() {
+      window.setTimeout(() => {
+        const savedMessages = localStorage.getItem("nexo-messages");
+
+        if (!savedMessages) return;
+
+        try {
+          const parsedMessages: unknown = JSON.parse(savedMessages);
+
+          if (Array.isArray(parsedMessages)) {
+            setMessages(parsedMessages as Message[]);
+          } else {
+            localStorage.removeItem("nexo-messages");
+          }
+        } catch {
+          localStorage.removeItem("nexo-messages");
+        }
+      }, 0);
+    }
+
+    window.addEventListener("nexo-messages-updated", handleMessagesUpdated);
+
+    return () => {
+      window.removeEventListener("nexo-messages-updated", handleMessagesUpdated);
+    };
+  }, []);
+
   // Save messages to localStorage
   useEffect(() => {
     if (!isLoaded) return;
