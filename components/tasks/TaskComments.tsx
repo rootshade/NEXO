@@ -40,26 +40,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
       const saved: TaskComment[] = raw ? JSON.parse(raw) : [];
       const taskComments = saved.filter((comment) => comment.taskId === taskId);
 
-      if (taskComments.length > 0) {
-        setComments(taskComments);
-      } else if (taskId === 1) {
-        // Keep the existing demo comment for the first task when no comments exist yet.
-        const sampleComment: TaskComment = {
-          id: Date.now(),
-          taskId: 1,
-          author: CURRENT_USER,
-          message: "Test comment: The login page design is under review.",
-          createdAt: new Date().toISOString(),
-        };
-        const otherComments = saved.filter((comment) => comment.taskId !== taskId);
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify([...otherComments, sampleComment])
-        );
-        setComments([sampleComment]);
-      } else {
-        setComments([]);
-      }
+      setComments(taskComments);
     } catch {
       setComments([]);
     } finally {
