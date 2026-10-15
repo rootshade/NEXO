@@ -57,7 +57,7 @@ export default function WelcomeSection() {
   }, []);
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+    <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30 p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm font-medium text-slate-400">Welcome back</p>
