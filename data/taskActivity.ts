@@ -58,11 +58,16 @@ export function addTaskActivity(
   };
 
   const activities = readAllActivities();
-  window.localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify([...activities, activity])
-  );
-  window.dispatchEvent(new CustomEvent(TASK_ACTIVITY_EVENT));
 
-  return activity;
+  try {
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify([...activities, activity])
+    );
+    window.dispatchEvent(new CustomEvent(TASK_ACTIVITY_EVENT));
+    return activity;
+  } catch {
+    // Activity logging should never prevent the task operation itself.
+    return undefined;
+  }
 }
