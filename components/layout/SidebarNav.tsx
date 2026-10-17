@@ -6,9 +6,14 @@ import { sidebarItems } from "./sidebar/sidebarData";
 import { canAccess, CURRENT_USER_EVENT, getCurrentUser } from "@/data/accessControl";
 
 const permissionByHref: Record<string, string> = {
-  "/dashboard": "dashboard", "/tasks": "tasks.view", "/letters": "letters",
-  "/messages": "messages", "/users": "users", "/roles": "roles",
-  "/permissions": "permissions", "/settings": "settings",
+  "/dashboard": "dashboard",
+  "/tasks": "tasks.view",
+  "/letters": "letters.view",
+  "/messages": "messages.view",
+  "/users": "users",
+  "/roles": "roles",
+  "/permissions": "permissions",
+  "/settings": "settings",
 };
 
 type SidebarNavProps = { onNavigate: () => void };
