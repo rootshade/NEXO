@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Mail, Plus, Search, X } from "lucide-react";
+import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
 
 import {
   initialMessages,
@@ -202,6 +202,26 @@ export default function MessagesPage() {
           New Message
         </button>
         </div>
+      </div>
+
+      {/* Message statistics */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Messages", value: messages.length, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
+          { label: "Unread Messages", value: messages.filter((message) => message.status === "Unread").length, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
+          { label: "Read Messages", value: messages.filter((message) => message.status === "Read").length, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
+          { label: "Sent by Me", value: messages.filter((message) => message.sender === "Mohammad").length, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return <div key={stat.label} className={`rounded-2xl border ${stat.border} bg-slate-900 p-5 transition hover:-translate-y-0.5 hover:bg-slate-800/80`}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-slate-400">{stat.label}</p>
+              <div className={`flex size-11 items-center justify-center rounded-xl ${stat.tile} ${stat.color}`}><Icon size={21} /></div>
+            </div>
+            <p className="mt-4 text-3xl font-bold tracking-tight text-white">{stat.value}</p>
+            <p className="mt-1 text-xs text-slate-500">Across this workspace</p>
+          </div>;
+        })}
       </div>
 
       {/* New Message Modal */}
@@ -405,70 +425,26 @@ export default function MessagesPage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search
-          size={18}
-          className="
-            absolute left-4 top-1/2
-            -translate-y-1/2
-            text-slate-500
-          "
-        />
-
-        <input
-          type="text"
-          value={search}
-          onChange={(event) =>
-            setSearch(event.target.value)
-          }
-          placeholder="Search messages..."
-          className="
-            w-full
-            rounded-xl
-            border border-slate-700/80
-            bg-slate-900
-            py-3 pl-11 pr-4
-            text-sm text-white
-            outline-none
-            placeholder:text-slate-500
-            transition-colors
-            focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
-          "
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {filters.map((filter) => {
-          const active =
-            activeFilter === filter;
-
-          return (
-            <button
-              key={filter}
-              type="button"
-              onClick={() =>
-                setActiveFilter(filter)
-              }
-              className={`
-                shrink-0
-                rounded-lg
-                px-4 py-2
-                text-sm font-medium
-                transition-colors
-                ${
-                  active
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-400 hover:bg-cyan-400/10 hover:text-cyan-200"
-                }
-              `}
-            >
-              {filter}
-            </button>
-          );
-        })}
-      </div>
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="flex flex-col gap-3 border-b border-slate-800 bg-slate-900/80 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div className="relative w-full sm:max-w-sm">
+            <Search size={17} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search messages..." className="w-full rounded-xl border border-slate-700 bg-slate-950 py-2.5 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10" />
+          </div>
+          <p className="text-xs text-slate-500">{filteredMessages.length} {filteredMessages.length === 1 ? "message" : "messages"} found</p>
+        </div>
+        <div className="flex flex-wrap gap-2 px-4 py-4 sm:px-5">
+          {filters.map((filter) => {
+            const active = activeFilter === filter;
+            return (
+              <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`rounded-lg border px-3.5 py-2 text-sm font-medium transition ${active ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600 hover:text-white"}`}>
+                {filter}
+                {filter === "Unread" && <span className="ml-2 text-xs opacity-70">{messages.filter((message) => message.status === "Unread").length}</span>}
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Message List */}
       <div className="grid grid-cols-1 gap-4">
@@ -545,7 +521,7 @@ export default function MessagesPage() {
               </div>
 
               {/* Date */}
-              <span className="shrink-0 text-xs text-slate-500">
+              <span className="shrink-0 rounded-lg border border-slate-700/70 bg-slate-950/70 px-2.5 py-1.5 text-xs text-slate-400">
                 {message.date}
               </span>
             </div>
