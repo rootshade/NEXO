@@ -13,15 +13,59 @@ const DEFAULT_USERS: AccessUser[] = [
 ];
 
 const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
-  Admin: ["dashboard", "tasks.view", "tasks.create", "tasks.edit", "tasks.delete", "letters", "messages", "users", "roles", "settings"],
-  Manager: ["dashboard", "tasks.view", "tasks.create", "tasks.edit", "letters", "messages", "settings"],
-  User: ["dashboard", "tasks.view", "letters", "messages", "settings"],
+  Admin: [
+    "dashboard",
+    "tasks.view",
+    "tasks.create",
+    "tasks.edit",
+    "tasks.delete",
+    "letters.view",
+    "letters.create",
+    "messages.view",
+    "messages.create",
+    "users",
+    "roles",
+    "settings",
+  ],
+  Manager: [
+    "dashboard",
+    "tasks.view",
+    "tasks.create",
+    "tasks.edit",
+    "letters.view",
+    "letters.create",
+    "messages.view",
+    "messages.create",
+    "settings",
+  ],
+  User: [
+    "dashboard",
+    "tasks.view",
+    "letters.view",
+    "letters.create",
+    "messages.view",
+    "messages.create",
+    "settings",
+  ],
+};
+
+const LEGACY_PERMISSION_FALLBACKS: Record<string, string> = {
+  "letters.view": "letters",
+  "letters.create": "letters",
+  "messages.view": "messages",
+  "messages.create": "messages",
 };
 
 const PERMISSION_BY_PATH: Record<string, string> = {
-  "/": "dashboard", "/dashboard": "dashboard", "/tasks": "tasks.view",
-  "/letters": "letters", "/messages": "messages", "/settings": "settings",
-  "/users": "users", "/roles": "roles", "/permissions": "permissions",
+  "/": "dashboard",
+  "/dashboard": "dashboard",
+  "/tasks": "tasks.view",
+  "/letters": "letters.view",
+  "/messages": "messages.view",
+  "/settings": "settings",
+  "/users": "users",
+  "/roles": "roles",
+  "/permissions": "permissions",
 };
 
 export function getUsers(): AccessUser[] {
@@ -34,7 +78,9 @@ export function getUsers(): AccessUser[] {
     if (!Array.isArray(parsed)) return DEFAULT_USERS;
     const users = parsed.filter((u): u is AccessUser => !!u && typeof u.id === "string" && typeof u.name === "string" && typeof u.role === "string" && (u.status === "Active" || u.status === "Inactive"));
     return users.length ? users : DEFAULT_USERS;
-  } catch { return DEFAULT_USERS; }
+  } catch {
+    return DEFAULT_USERS;
+  }
 }
 
 export function getCurrentUser(): AccessUser {
@@ -73,14 +119,22 @@ export function canViewTask(
 export function canAccess(user: AccessUser, permission: string): boolean {
   if (user.role === "Super Admin") return true;
 
+  const legacyPermission = LEGACY_PERMISSION_FALLBACKS[permission];
+
   if (typeof window !== "undefined") {
     try {
       const raw: unknown = JSON.parse(window.localStorage.getItem(PERMISSIONS_KEY) || "null");
       if (raw && typeof raw === "object") {
         const rolePermissions = (raw as Record<string, unknown>)[user.role];
         if (rolePermissions && typeof rolePermissions === "object") {
-          const value = (rolePermissions as Record<string, unknown>)[permission];
+          const permissions = rolePermissions as Record<string, unknown>;
+          const value = permissions[permission];
           if (typeof value === "boolean") return value;
+
+          if (legacyPermission) {
+            const legacyValue = permissions[legacyPermission];
+            if (typeof legacyValue === "boolean") return legacyValue;
+          }
         }
       }
     } catch {
@@ -88,13 +142,14 @@ export function canAccess(user: AccessUser, permission: string): boolean {
     }
   }
 
-  return DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(permission) ?? false;
+  return DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(permission) ??
+    (legacyPermission ? DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(legacyPermission) ?? false : false);
 }
 
 export function permissionForPath(pathname: string): string | null {
   if (PERMISSION_BY_PATH[pathname]) return PERMISSION_BY_PATH[pathname];
   if (pathname.startsWith("/tasks/")) return "tasks.view";
-  if (pathname.startsWith("/letters/")) return "letters";
-  if (pathname.startsWith("/messages/")) return "messages";
+  if (pathname.startsWith("/letters/")) return "letters.view";
+  if (pathname.startsWith("/messages/")) return "messages.view";
   return null;
 }
