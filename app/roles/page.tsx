@@ -5,6 +5,9 @@ import { BadgeCheck, Crown, Edit2, Plus, Shield, ShieldCheck, Trash2, UsersRound
 
 type Role = { id: string; name: string; description: string; members: number; protected?: boolean };
 const STORAGE_KEY = "nexo-roles";
+const ROLES_EVENT = "nexo-roles-updated";
+const USERS_KEY = "nexo-users";
+const USERS_EVENT = "nexo-users-updated";
 const DEFAULT_ROLES: Role[] = [
   { id: "super-admin", name: "Super Admin", description: "Full workspace control and system configuration.", members: 1, protected: true },
   { id: "admin", name: "Admin", description: "Manage users and workspace operations.", members: 1 },
@@ -47,14 +50,38 @@ export default function RolesPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setRoles(readRoles()), 0);
-    return () => window.clearTimeout(timer);
+    const refresh = () => {
+      const savedRoles = readRoles();
+      let users: Array<{ role?: string }> = [];
+      try {
+        const rawUsers = window.localStorage.getItem(USERS_KEY);
+        const parsedUsers: unknown = rawUsers ? JSON.parse(rawUsers) : [];
+        if (Array.isArray(parsedUsers)) users = parsedUsers as Array<{ role?: string }>;
+      } catch {
+        users = [];
+      }
+      setRoles(savedRoles.map((role) => ({
+        ...role,
+        members: users.filter((user) => user && user.role === role.name).length,
+      })));
+    };
+    const timer = window.setTimeout(refresh, 0);
+    window.addEventListener("storage", refresh);
+    window.addEventListener(USERS_EVENT, refresh);
+    window.addEventListener(ROLES_EVENT, refresh);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener(USERS_EVENT, refresh);
+      window.removeEventListener(ROLES_EVENT, refresh);
+    };
   }, []);
 
   function persist(next: Role[]) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       setRoles(next);
+      window.dispatchEvent(new CustomEvent(ROLES_EVENT));
       setError("");
     } catch {
       setError("Could not save roles in this browser.");
@@ -90,7 +117,8 @@ export default function RolesPage() {
 
   function remove(role: Role) {
     if (role.protected) return;
-    if (!window.confirm(`Delete the "${role.name}" role? This prototype does not migrate users assigned to it.`)) return;
+    if (role.members > 0) { setError(`Reassign the ${role.members} user(s) using "${role.name}" before deleting this role.`); return; }
+    if (!window.confirm(`Delete the "${role.name}" role?`)) return;
     persist(roles.filter((item) => item.id !== role.id));
   }
 
@@ -113,7 +141,7 @@ export default function RolesPage() {
             {role.protected && <span className="rounded-md bg-amber-300/10 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">Built-in</span>}</div>
           <h2 className="mt-4 text-lg font-semibold text-white">{role.name}</h2>
           <p className="mt-2 min-h-12 text-sm leading-6 text-slate-400">{role.description || "No description provided."}</p>
-          <div className="mt-4 flex items-center gap-2 text-xs text-slate-500"><UsersRound size={14} /> {role.members} sample {role.members === 1 ? "member" : "members"}</div>
+          <div className="mt-4 flex items-center gap-2 text-xs text-slate-500"><UsersRound size={14} /> {role.members} {role.members === 1 ? "member" : "members"}</div>
           <div className="mt-5 flex gap-2 border-t border-slate-800 pt-4">
             <button onClick={() => openEdit(role)} className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-200"><Edit2 size={14} /> Edit</button>
             <button onClick={() => remove(role)} disabled={role.protected} title={role.protected ? "Built-in role cannot be deleted" : "Delete role"} className="inline-flex items-center gap-2 rounded-lg border border-rose-500/20 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-400/10 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 size={14} /> Delete</button>
