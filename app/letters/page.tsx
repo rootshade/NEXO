@@ -10,7 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { canAccess, canViewCorrespondence, getCurrentUser, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialLetters,
@@ -38,6 +38,7 @@ export default function LettersPage() {
   const [canViewLetters, setCanViewLetters] = useState(false);
   const [canCreateLetters, setCanCreateLetters] = useState(false);
   const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
+  const [availableRecipients, setAvailableRecipients] = useState<AccessUser[]>([]);
 
   const [activeFilter, setActiveFilter] =
     useState<LetterFilter>("All");
@@ -65,6 +66,7 @@ export default function LettersPage() {
     function syncLetterPermissions() {
       const user = getCurrentUser();
       setCurrentUser(user);
+      setAvailableRecipients(getUsers().filter((candidate) => candidate.status === "Active" && candidate.id !== user.id));
       setCanViewLetters(canAccess(user, "letters.view"));
       setCanCreateLetters(canAccess(user, "letters.create"));
     }
@@ -163,8 +165,9 @@ export default function LettersPage() {
       setError("You do not have permission to send letters.");
       return;
     }
-    if (!receiver.trim()) {
-      setError("Please enter a receiver.");
+    const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
+    if (!selectedRecipient) {
+      setError("Please select an active recipient from the list.");
       return;
     }
 
@@ -182,7 +185,7 @@ export default function LettersPage() {
       id: Date.now(),
       subject: subject.trim(),
       sender: getCurrentUser().name,
-      receiver: receiver.trim(),
+      receiver: selectedRecipient.name,
       date: new Date().toISOString().split("T")[0],
       status: "Sent",
       content: content.trim(),
@@ -370,29 +373,21 @@ export default function LettersPage() {
                   Receiver
                 </label>
 
-                <input
-                  type="text"
+                <select
                   value={receiver}
                   onChange={(event) => {
                     setReceiver(event.target.value);
                     setError("");
                   }}
-                  placeholder="Enter receiver name..."
-                  className="
-                    w-full
-                    rounded-xl
-                    border border-slate-700/80
-                    bg-slate-950
-                    px-4 py-3
-                    text-sm text-white
-                    outline-none
-                    placeholder:text-slate-600
-                    transition-colors
-                    focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
-                    focus:ring-1
-                    focus:ring-slate-600
-                  "
-                />
+                  className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
+                >
+                  <option value="">Select an active recipient...</option>
+                  {availableRecipients.map((recipient) => (
+                    <option key={recipient.id} value={recipient.name}>
+                      {recipient.name} ({recipient.role})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Subject */}
