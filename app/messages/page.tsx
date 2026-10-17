@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
+import { canAccess, getCurrentUser, CURRENT_USER_EVENT } from "@/data/accessControl";
 
 import {
   initialMessages,
@@ -22,6 +23,8 @@ export default function MessagesPage() {
     useState<Message[]>(initialMessages);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [canViewMessages, setCanViewMessages] = useState(false);
+  const [canCreateMessages, setCanCreateMessages] = useState(false);
 
   const [activeFilter, setActiveFilter] =
     useState<MessageFilter>("All");
@@ -34,6 +37,25 @@ export default function MessagesPage() {
   const [receiver, setReceiver] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+
+  useEffect(() => {
+    function syncMessagePermissions() {
+      const user = getCurrentUser();
+      setCanViewMessages(canAccess(user, "messages.view"));
+      setCanCreateMessages(canAccess(user, "messages.create"));
+    }
+    syncMessagePermissions();
+    window.addEventListener(CURRENT_USER_EVENT, syncMessagePermissions);
+    window.addEventListener("nexo-permissions-updated", syncMessagePermissions);
+    window.addEventListener("nexo-users-updated", syncMessagePermissions);
+    window.addEventListener("storage", syncMessagePermissions);
+    return () => {
+      window.removeEventListener(CURRENT_USER_EVENT, syncMessagePermissions);
+      window.removeEventListener("nexo-permissions-updated", syncMessagePermissions);
+      window.removeEventListener("nexo-users-updated", syncMessagePermissions);
+      window.removeEventListener("storage", syncMessagePermissions);
+    };
+  }, []);
 
   // Load messages from localStorage after the initial render
   useEffect(() => {
@@ -129,6 +151,10 @@ export default function MessagesPage() {
 
   // Create new message
   function handleSendMessage() {
+    if (!canAccess(getCurrentUser(), "messages.create")) {
+      setCanCreateMessages(false);
+      return;
+    }
     if (
       !receiver.trim() ||
       !subject.trim() ||
@@ -166,6 +192,15 @@ export default function MessagesPage() {
     setContent("");
   }
 
+  if (!canViewMessages) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-slate-900 p-8 text-center">
+        <h1 className="text-xl font-semibold text-white">Access Denied</h1>
+        <p className="mt-2 text-sm text-slate-400">You do not have permission to view messages.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
 
@@ -184,7 +219,7 @@ export default function MessagesPage() {
           </p>
         </div>
 
-        <button
+        {canCreateMessages && <button
           type="button"
           onClick={() => setShowNewMessage(true)}
           className="
@@ -200,7 +235,7 @@ export default function MessagesPage() {
         >
           <Plus size={18} />
           New Message
-        </button>
+        </button>}
         </div>
       </div>
 
@@ -225,7 +260,7 @@ export default function MessagesPage() {
       </div>
 
       {/* New Message Modal */}
-      {showNewMessage && (
+      {showNewMessage && canCreateMessages && (
         <div
           className="
             fixed inset-0 z-50
