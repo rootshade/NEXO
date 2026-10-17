@@ -116,19 +116,24 @@ export function canViewTask(
   return sameName(task.assignedTo, user.name) || sameName(task.createdBy, user.name);
 }
 
-/** Check whether a correspondence participant matches the current user's display name. Supports legacy seeded labels such as "Ali Ahmadi" for user "Ali". */
+/** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */
+function matchesCorrespondenceName(participant: string, userName: string): boolean {
+  const person = participant.trim().toLowerCase();
+  const name = userName.trim().toLowerCase();
+  return person === name || person.startsWith(`${name} `) || name.startsWith(`${person} `);
+}
+
 export function canViewCorrespondence(
   sender: string,
   receiver: string,
   user: AccessUser
 ): boolean {
-  const matchesName = (participant: string, userName: string) => {
-    const person = participant.trim().toLowerCase();
-    const name = userName.trim().toLowerCase();
-    return person === name || person.startsWith(`${name} `) || name.startsWith(`${person} `);
-  };
+  return matchesCorrespondenceName(sender, user.name) || matchesCorrespondenceName(receiver, user.name);
+}
 
-  return matchesName(sender, user.name) || matchesName(receiver, user.name);
+/** Only the addressed recipient can mark a correspondence item as read. */
+export function isCorrespondenceRecipient(receiver: string, user: AccessUser): boolean {
+  return matchesCorrespondenceName(receiver, user.name);
 }
 
 export function canAccess(user: AccessUser, permission: string): boolean {
