@@ -396,14 +396,15 @@ export default function SettingsPage() {
               <span
                 className={`
                   absolute
+                  left-1
                   top-1
                   h-4 w-4
                   rounded-full
                   transition-transform
                   ${
                     settings.notifications
-                      ? "translate-x-6 bg-slate-900"
-                      : "translate-x-1 bg-slate-400"
+                      ? "translate-x-5 bg-slate-900"
+                      : "translate-x-0 bg-slate-400"
                   }
                 `}
               />
