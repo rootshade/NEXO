@@ -85,7 +85,7 @@ export default function RecentActivity() {
             return (
               <div
                 key={activity.id}
-                className="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-cyan-400/10/50"
+                className="flex items-start gap-4 px-5 py-4 transition-colors hover:bg-cyan-400/5"
               >
                 <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-300">
                   <Icon size={18} />
