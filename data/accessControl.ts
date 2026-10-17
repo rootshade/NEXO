@@ -58,6 +58,8 @@ export function canViewTask(
   task: { assignedTo: string; createdBy?: string },
   user: AccessUser
 ): boolean {
+  if (!canAccess(user, "tasks.view")) return false;
+
   const sameName = (left: string | undefined, right: string) =>
     (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
 
