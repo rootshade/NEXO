@@ -35,6 +35,21 @@ export function getCurrentUser(): AccessUser {
   return users.find((user) => user.id === id && user.status === "Active") || users.find((user) => user.id === SUPER_ADMIN_ID) || users[0] || DEFAULT_USERS[0];
 }
 
+/** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
+export function canViewTask(
+  task: { assignedTo: string; createdBy?: string },
+  user: AccessUser
+): boolean {
+  const sameName = (left: string | undefined, right: string) =>
+    (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
+
+  if (user.role === "Super Admin") {
+    return sameName(task.createdBy, user.name);
+  }
+
+  return sameName(task.assignedTo, user.name) || sameName(task.createdBy, user.name);
+}
+
 export function canAccess(user: AccessUser, permission: string): boolean {
   if (user.role === "Super Admin") return true;
   try {
