@@ -1,15 +1,8 @@
 import Link from "next/link";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, CircleCheck, Clock3, UserRound } from "lucide-react";
 
-type TaskStatus =
-  | "Pending"
-  | "In Progress"
-  | "Completed";
-
-type TaskPriority =
-  | "Low"
-  | "Medium"
-  | "High";
+type TaskStatus = "Pending" | "In Progress" | "Completed";
+type TaskPriority = "Low" | "Medium" | "High";
 
 type TaskCardProps = {
   id: number;
@@ -23,153 +16,56 @@ type TaskCardProps = {
 
 function getStatusStyle(status: TaskStatus) {
   switch (status) {
-    case "Completed":
-      return "bg-green-500/10 text-green-400";
-
-    case "In Progress":
-      return "bg-sky-400/10 text-sky-300";
-
-    case "Pending":
-      return "bg-yellow-500/10 text-yellow-400";
-
-    default:
-      return "bg-slate-500/10 text-slate-400";
+    case "Completed": return "border-emerald-400/30 bg-emerald-400/10 text-emerald-300";
+    case "In Progress": return "border-sky-400/30 bg-sky-400/10 text-sky-300";
+    default: return "border-amber-400/30 bg-amber-400/10 text-amber-300";
   }
 }
 
 function getPriorityStyle(priority: TaskPriority) {
   switch (priority) {
-    case "High":
-      return "bg-red-500/10 text-red-400";
-
-    case "Medium":
-      return "bg-yellow-500/10 text-yellow-400";
-
-    case "Low":
-      return "bg-green-500/10 text-green-400";
-
-    default:
-      return "bg-slate-500/10 text-slate-400";
+    case "High": return "border-rose-400/30 bg-rose-400/10 text-rose-300";
+    case "Medium": return "border-amber-400/30 bg-amber-400/10 text-amber-300";
+    default: return "border-emerald-400/30 bg-emerald-400/10 text-emerald-300";
   }
 }
 
-export default function TaskCard({
-  id,
-  title,
-  description,
-  status,
-  priority,
-  assignedTo,
-  deadline,
-}: TaskCardProps) {
+export default function TaskCard({ id, title, description, status, priority, assignedTo, deadline }: TaskCardProps) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-
   const deadlineDate = deadline ? new Date(`${deadline}T00:00:00`) : null;
   const hasValidDeadline = deadlineDate !== null && !Number.isNaN(deadlineDate.getTime());
-  const isOverdue =
-    hasValidDeadline && status !== "Completed" && deadlineDate.getTime() < today.getTime();
-
-  const formattedDeadline = hasValidDeadline
-    ? deadlineDate.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "No deadline";
+  const isOverdue = hasValidDeadline && status !== "Completed" && deadlineDate.getTime() < today.getTime();
+  const formattedDeadline = hasValidDeadline ? deadlineDate.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "No deadline";
 
   return (
-    <Link
-      href={`/tasks/${id}`}
-      className="
-        block
-        rounded-2xl
-        border border-slate-800
-        bg-slate-900
-        p-5
-        transition-all
-        duration-200
-        hover:border-cyan-400/30
-        hover:bg-cyan-400/10/70
-      "
-    >
-      {/* Top */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <Link href={`/tasks/${id}`} className="group block rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/20 p-5 shadow-xl shadow-black/10 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-400/30 hover:from-slate-900 hover:to-cyan-950/20">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h3 className="font-semibold text-white">
-            {title}
-          </h3>
-
-          <p className="mt-2 text-sm leading-6 text-slate-400">
-            {description}
-          </p>
+          <div className="mb-2 flex items-center gap-2 text-xs text-slate-500"><span className="size-1.5 rounded-full bg-cyan-300" /> Task</div>
+          <h3 className="text-base font-semibold text-white transition group-hover:text-cyan-200">{title}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{description}</p>
         </div>
-
-        <span
-          className={`
-            w-fit shrink-0
-            rounded-full
-            px-3 py-1
-            text-xs font-medium
-            ${getPriorityStyle(priority)}
-          `}
-        >
-          {priority}
-        </span>
+        <span className={`w-fit shrink-0 rounded-full border px-3 py-1 text-xs font-medium ${getPriorityStyle(priority)}`}>{priority}</span>
       </div>
 
-      {/* Bottom */}
-      <div
-        className="
-          mt-5
-          flex flex-col gap-3
-          border-t border-slate-800
-          pt-4
-          sm:flex-row
-          sm:items-center
-          sm:justify-between
-        "
-      >
-        <span
-          className={`
-            w-fit
-            rounded-full
-            px-3 py-1
-            text-xs font-medium
-            ${getStatusStyle(status)}
-          `}
-        >
-          {status}
-        </span>
+      <div className="mt-5 flex flex-col gap-4 border-t border-slate-800/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${getStatusStyle(status)}`}>
+            {status === "Completed" ? <CircleCheck size={13} /> : status === "In Progress" ? <Clock3 size={13} /> : <Clock3 size={13} />}
+            {status}
+          </span>
+          {isOverdue && <span className="rounded-full border border-rose-400/30 bg-rose-400/10 px-2.5 py-1 text-xs font-medium text-rose-300">Overdue</span>}
+        </div>
 
         <div className="flex flex-wrap items-center gap-4">
-          <div className={`flex items-center gap-2 text-sm ${isOverdue ? "text-red-400" : "text-slate-400"}`}>
+          <div className={`flex items-center gap-2 text-sm ${isOverdue ? "text-rose-300" : "text-slate-400"}`}>
             <CalendarDays size={16} />
             <span>{formattedDeadline}</span>
-            {isOverdue && (
-              <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400">
-                Overdue
-              </span>
-            )}
           </div>
-
           <div className="flex items-center gap-2">
-          <div
-            className="
-              flex size-8
-              items-center justify-center
-              rounded-full
-              bg-slate-700
-              text-xs font-semibold
-              text-white
-            "
-          >
-            {assignedTo.charAt(0).toUpperCase()}
-          </div>
-
-          <span className="text-sm text-slate-400">
-            {assignedTo}
-          </span>
+            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-500 text-xs font-bold text-white shadow-lg shadow-cyan-950/20"><UserRound size={15} /></div>
+            <span className="text-sm text-slate-300">{assignedTo}</span>
           </div>
         </div>
       </div>
