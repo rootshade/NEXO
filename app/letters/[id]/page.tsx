@@ -13,7 +13,7 @@ import {
   initialLetters,
   type Letter,
 } from "@/data/letters";
-import { canAccess, canViewCorrespondence, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, isCorrespondenceRecipient } from "@/data/accessControl";
 
 type LetterDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -94,7 +94,8 @@ export default function LetterDetailsPage({
         return;
       }
 
-      if (foundLetter.status === "Unread") {
+      const currentUser = getCurrentUser();
+      if (foundLetter.status === "Unread" && isCorrespondenceRecipient(foundLetter.receiver, currentUser)) {
         const updatedLetters = letters.map((item) =>
           item.id === foundLetter.id
             ? {
