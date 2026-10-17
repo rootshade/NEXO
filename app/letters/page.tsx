@@ -191,10 +191,10 @@ export default function LettersPage() {
       content: content.trim(),
     };
 
-    setLetters((currentLetters) => [
-      newLetter,
-      ...currentLetters,
-    ]);
+    const updatedLetters = [newLetter, ...letters];
+    localStorage.setItem("nexo-letters", JSON.stringify(updatedLetters));
+    setLetters(updatedLetters);
+    window.dispatchEvent(new Event("nexo-letters-updated"));
 
     setSubject("");
     setReceiver("");
