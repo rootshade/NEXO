@@ -58,9 +58,15 @@ export default function LettersPage() {
     ? letters.filter((letter) => canViewCorrespondence(letter.sender, letter.receiver, currentUser))
     : [];
 
-  const unreadCount = visibleLetters.filter((letter) => letter.status === "Unread").length;
-  const readCount = visibleLetters.filter((letter) => letter.status === "Read").length;
-  const sentCount = visibleLetters.filter((letter) => letter.status === "Sent").length;
+  const inboxLetters = currentUser
+    ? visibleLetters.filter((letter) => letter.receiver === currentUser.name)
+    : [];
+  const sentLetters = currentUser
+    ? visibleLetters.filter((letter) => letter.sender === currentUser.name)
+    : [];
+  const unreadCount = inboxLetters.filter((letter) => letter.status === "Unread").length;
+  const readCount = inboxLetters.filter((letter) => letter.status === "Read").length;
+  const sentCount = sentLetters.length;
 
   useEffect(() => {
     function syncLetterPermissions() {
@@ -136,9 +142,12 @@ export default function LettersPage() {
    * Filter letters
    */
   const filteredLetters = visibleLetters.filter((letter) => {
+    const isSender = currentUser?.name === letter.sender;
     const matchesFilter =
       activeFilter === "All" ||
-      letter.status === activeFilter;
+      (activeFilter === "Sent" && isSender) ||
+      (activeFilter === "Unread" && !isSender && letter.status === "Unread") ||
+      (activeFilter === "Read" && !isSender && letter.status === "Read");
 
     const searchValue = search.toLowerCase();
 
@@ -266,7 +275,7 @@ export default function LettersPage() {
       {/* Letter statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Total Letters", value: letters.length, icon: Mail, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
+          { label: "Total Letters", value: visibleLetters.length, icon: Mail, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
           { label: "Unread", value: unreadCount, icon: Mail, color: "text-sky-300", tile: "bg-sky-400/10", border: "border-sky-400/20" },
           { label: "Read", value: readCount, icon: MailOpen, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
           { label: "Sent", value: sentCount, icon: Plus, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
@@ -603,7 +612,9 @@ export default function LettersPage() {
                     text-cyan-200
                   "
                 >
-                  {letter.status === "Unread" ? (
+                  {letter.sender === currentUser?.name ? (
+                    <Mail size={20} />
+                  ) : letter.status === "Unread" ? (
                     <Mail size={20} />
                   ) : (
                     <MailOpen size={20} />
@@ -647,15 +658,15 @@ export default function LettersPage() {
                     px-2.5 py-1
                     text-xs font-medium
                     ${
-                      letter.status === "Unread"
+                      letter.sender === currentUser?.name
+                        ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                        : letter.status === "Unread"
                         ? "border border-sky-400/20 bg-sky-400/10 text-sky-300"
-                        : letter.status === "Read"
-                        ? "border border-slate-700 bg-slate-800 text-slate-300"
-                        : "border border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                        : "border border-slate-700 bg-slate-800 text-slate-300"
                     }
                   `}
                 >
-                  {letter.status}
+                  {letter.sender === currentUser?.name ? "Sent" : letter.status}
                 </span>
 
                 <span className="text-xs text-slate-600">
