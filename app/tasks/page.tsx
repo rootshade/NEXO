@@ -8,7 +8,8 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 
 import { getTasks, loadTasks, createTask } from "@/data/taskStore";
 import type { Task } from "@/data/tasks";
-import { canAccess, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewTask, getCurrentUser } from "@/data/accessControl";
+import type { AccessUser } from "@/data/accessControl";
 
 type SortOption = "newest" | "oldest" | "deadline" | "priority";
 type PriorityFilter = "All" | "Low" | "Medium" | "High";
@@ -24,43 +25,51 @@ export default function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("All");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [canCreateTasks, setCanCreateTasks] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AccessUser>({ id: "user-mohammad", name: "Mohammad", email: "mohammad@nexo.local", role: "Super Admin", status: "Active" });
 
   useEffect(() => {
-    const refreshAccess = () => setCanCreateTasks(canAccess(getCurrentUser(), "tasks.create"));
-    const timer = window.setTimeout(refreshAccess, 0);
+    const refreshAccess = () => {
+      const user = getCurrentUser();
+      setCurrentUser(user);
+      setCanCreateTasks(canAccess(user, "tasks.create"));
+    };
+    const refreshTasks = () => setTasks(loadTasks());
+    const timer = window.setTimeout(() => {
+      refreshAccess();
+      refreshTasks();
+    }, 0);
     window.addEventListener("nexo-current-user-updated", refreshAccess);
     window.addEventListener("nexo-permissions-updated", refreshAccess);
     window.addEventListener("storage", refreshAccess);
+    window.addEventListener("nexo-tasks-updated", refreshTasks);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("nexo-current-user-updated", refreshAccess);
       window.removeEventListener("nexo-permissions-updated", refreshAccess);
       window.removeEventListener("storage", refreshAccess);
+      window.removeEventListener("nexo-tasks-updated", refreshTasks);
     };
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => setTasks(loadTasks()), 0);
-    return () => window.clearTimeout(timer);
   }, []);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const overdueTasksCount = tasks.filter((task) => {
+  const visibleTasks = tasks.filter((task) => canViewTask(task, currentUser));
+
+  const overdueTasksCount = visibleTasks.filter((task) => {
     if (!task.deadline || task.status === "Completed") return false;
     const deadlineDate = new Date(`${task.deadline}T00:00:00`);
     return !Number.isNaN(deadlineDate.getTime()) && deadlineDate.getTime() < today.getTime();
   }).length;
 
   const taskStats = [
-    { label: "Total Tasks", value: tasks.length, icon: ListTodo, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20", note: "Across this workspace" },
-    { label: "In Progress", value: tasks.filter((task) => task.status === "In Progress").length, icon: Clock3, color: "text-sky-300", tile: "bg-sky-400/10", border: "border-sky-400/20", note: "Currently being worked on" },
-    { label: "Completed", value: tasks.filter((task) => task.status === "Completed").length, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20", note: "Successfully finished" },
+    { label: "Total Tasks", value: visibleTasks.length, icon: ListTodo, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20", note: "Across this workspace" },
+    { label: "In Progress", value: visibleTasks.filter((task) => task.status === "In Progress").length, icon: Clock3, color: "text-sky-300", tile: "bg-sky-400/10", border: "border-sky-400/20", note: "Currently being worked on" },
+    { label: "Completed", value: visibleTasks.filter((task) => task.status === "Completed").length, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20", note: "Successfully finished" },
     { label: "Overdue", value: overdueTasksCount, icon: AlertTriangle, color: "text-rose-300", tile: "bg-rose-400/10", border: "border-rose-400/20", note: "Need attention" },
   ];
 
-  const filteredTasks = tasks.filter((task) => {
+  const filteredTasks = visibleTasks.filter((task) => {
     const deadlineDate = task.deadline ? new Date(`${task.deadline}T00:00:00`) : null;
     const isOverdue = deadlineDate !== null && !Number.isNaN(deadlineDate.getTime()) && deadlineDate.getTime() < today.getTime() && task.status !== "Completed";
     const matchesFilter = activeFilter === "All" || (activeFilter === "Overdue" ? isOverdue : task.status === activeFilter);
@@ -88,6 +97,12 @@ export default function TasksPage() {
   });
 
   function handleCreateTask(data: { title: string; description: string; priority: "Low" | "Medium" | "High"; assignedTo: string; deadline: string }) {
+    const user = getCurrentUser();
+    if (!canAccess(user, "tasks.create")) {
+      setCanCreateTasks(false);
+      setIsCreateModalOpen(false);
+      return;
+    }
     createTask(data);
     setTasks(getTasks());
   }
