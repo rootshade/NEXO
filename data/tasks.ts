@@ -15,6 +15,8 @@ export type Task = {
   status: TaskStatus;
   priority: TaskPriority;
   assignedTo: string;
+  /** Name of the user who created this task. */
+  createdBy?: string;
 
   // Task dates
   createdAt: string;
@@ -30,6 +32,7 @@ export const tasks: Task[] = [
     status: "In Progress",
     priority: "High",
     assignedTo: "Mohammad",
+    createdBy: "Mohammad",
     createdAt: "2026-10-01",
     deadline: "2026-10-10",
   },
@@ -54,6 +57,7 @@ export const tasks: Task[] = [
     status: "Completed",
     priority: "High",
     assignedTo: "Ali",
+    createdBy: "Mohammad",
     createdAt: "2026-09-28",
     deadline: "2026-10-02",
   },
