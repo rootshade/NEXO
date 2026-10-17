@@ -49,6 +49,10 @@ export default function LettersPage() {
 
   const [error, setError] = useState("");
 
+  const unreadCount = letters.filter((letter) => letter.status === "Unread").length;
+  const readCount = letters.filter((letter) => letter.status === "Read").length;
+  const sentCount = letters.filter((letter) => letter.status === "Sent").length;
+
   /*
    * Load letters from localStorage after the initial render.
    * The deferred read keeps hydration deterministic in Next.js.
@@ -212,6 +216,30 @@ export default function LettersPage() {
           New Letter
         </button>
         </div>
+      </div>
+
+      {/* Letter statistics */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Letters", value: letters.length, icon: Mail, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
+          { label: "Unread", value: unreadCount, icon: Mail, color: "text-sky-300", tile: "bg-sky-400/10", border: "border-sky-400/20" },
+          { label: "Read", value: readCount, icon: MailOpen, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
+          { label: "Sent", value: sentCount, icon: Plus, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
+        ].map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} className={`rounded-2xl border ${stat.border} bg-slate-900 p-5 transition hover:-translate-y-0.5 hover:bg-slate-800/80`}>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm text-slate-400">{stat.label}</p>
+                <div className={`flex size-11 items-center justify-center rounded-xl ${stat.tile} ${stat.color}`}>
+                  <Icon size={21} />
+                </div>
+              </div>
+              <p className="mt-4 text-3xl font-bold tracking-tight text-white">{stat.value}</p>
+              <p className="mt-1 text-xs text-slate-500">Across this workspace</p>
+            </div>
+          );
+        })}
       </div>
 
       {/* New Letter Modal */}
