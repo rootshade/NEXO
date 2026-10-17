@@ -19,6 +19,8 @@ const PERMISSION_BY_PATH: Record<string, string> = {
 };
 
 export function getUsers(): AccessUser[] {
+  if (typeof window === "undefined") return DEFAULT_USERS;
+
   try {
     const raw = window.localStorage.getItem(USERS_KEY);
     if (!raw) return DEFAULT_USERS;
@@ -31,8 +33,20 @@ export function getUsers(): AccessUser[] {
 
 export function getCurrentUser(): AccessUser {
   const users = getUsers();
+
+  // During Next.js server rendering, browser storage is unavailable.
+  // Return a stable default user until the client can read localStorage.
+  if (typeof window === "undefined") {
+    return users.find((user) => user.id === SUPER_ADMIN_ID) || DEFAULT_USERS[0];
+  }
+
   const id = window.localStorage.getItem(CURRENT_USER_KEY) || SUPER_ADMIN_ID;
-  return users.find((user) => user.id === id && user.status === "Active") || users.find((user) => user.id === SUPER_ADMIN_ID) || users[0] || DEFAULT_USERS[0];
+  return (
+    users.find((user) => user.id === id && user.status === "Active") ||
+    users.find((user) => user.id === SUPER_ADMIN_ID) ||
+    users[0] ||
+    DEFAULT_USERS[0]
+  );
 }
 
 /** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
