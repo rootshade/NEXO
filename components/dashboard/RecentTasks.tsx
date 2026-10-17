@@ -72,7 +72,7 @@ export default function RecentTasks() {
           <Link
             key={task.id}
             href={`/tasks/${task.id}`}
-            className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-cyan-400/10/50 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-3 px-5 py-4 transition-colors hover:bg-cyan-400/5 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="min-w-0">
               <p className="truncate font-medium text-white">{task.title}</p>
