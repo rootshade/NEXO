@@ -13,7 +13,7 @@ import {
   initialMessages,
   type Message,
 } from "@/data/messages";
-import { canAccess, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser } from "@/data/accessControl";
 
 type MessageDetailsPageProps = {
   params: Promise<{
@@ -58,6 +58,12 @@ export default function MessageDetailsPage({
       );
 
       if (!foundMessage) {
+        setLoading(false);
+        return;
+      }
+
+      if (!canViewCorrespondence(foundMessage.sender, foundMessage.receiver, getCurrentUser())) {
+        setAccessDenied(true);
         setLoading(false);
         return;
       }
