@@ -8,6 +8,8 @@ const STORAGE_KEY = "nexo-roles";
 const ROLES_EVENT = "nexo-roles-updated";
 const USERS_KEY = "nexo-users";
 const USERS_EVENT = "nexo-users-updated";
+const PERMISSIONS_KEY = "nexo-permissions";
+const PERMISSIONS_EVENT = "nexo-permissions-updated";
 const DEFAULT_ROLES: Role[] = [
   { id: "super-admin", name: "Super Admin", description: "Full workspace control and system configuration.", members: 1, protected: true },
   { id: "admin", name: "Admin", description: "Manage users and workspace operations.", members: 1 },
@@ -34,6 +36,16 @@ function readRoles(): Role[] {
   }
 }
 
+function readUsers(): Array<{ id: string; role?: string }> {
+  try {
+    const raw = window.localStorage.getItem(USERS_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((user): user is { id: string; role?: string } => !!user && typeof user === "object" && typeof (user as { id?: unknown }).id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function iconFor(name: string) {
   if (name === "Super Admin") return Crown;
   if (name === "Admin") return ShieldCheck;
@@ -52,17 +64,10 @@ export default function RolesPage() {
   useEffect(() => {
     const refresh = () => {
       const savedRoles = readRoles();
-      let users: Array<{ role?: string }> = [];
-      try {
-        const rawUsers = window.localStorage.getItem(USERS_KEY);
-        const parsedUsers: unknown = rawUsers ? JSON.parse(rawUsers) : [];
-        if (Array.isArray(parsedUsers)) users = parsedUsers as Array<{ role?: string }>;
-      } catch {
-        users = [];
-      }
+      const users = readUsers();
       setRoles(savedRoles.map((role) => ({
         ...role,
-        members: users.filter((user) => user && user.role === role.name).length,
+        members: users.filter((user) => user.role === role.name).length,
       })));
     };
     const timer = window.setTimeout(refresh, 0);
@@ -80,7 +85,7 @@ export default function RolesPage() {
   function persist(next: Role[]) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      setRoles(next);
+      setRoles(next.map((role) => ({ ...role, members: readUsers().filter((user) => user.role === role.name).length })));
       window.dispatchEvent(new CustomEvent(ROLES_EVENT));
       setError("");
     } catch {
@@ -96,6 +101,29 @@ export default function RolesPage() {
     setEditingId(role.id); setName(role.name); setDescription(role.description); setError(""); setModalOpen(true);
   }
 
+  function syncRenamedRole(oldName: string, newName: string) {
+    const users = readUsers();
+    const nextUsers = users.map((user) => user.role === oldName ? { ...user, role: newName } : user);
+    window.localStorage.setItem(USERS_KEY, JSON.stringify(nextUsers));
+    window.dispatchEvent(new CustomEvent(USERS_EVENT));
+
+    try {
+      const raw = window.localStorage.getItem(PERMISSIONS_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === "object") {
+        const matrix = { ...(parsed as Record<string, unknown>) };
+        if (Object.prototype.hasOwnProperty.call(matrix, oldName)) {
+          matrix[newName] = matrix[oldName];
+          delete matrix[oldName];
+          window.localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(matrix));
+          window.dispatchEvent(new CustomEvent(PERMISSIONS_EVENT));
+        }
+      }
+    } catch {
+      // The role itself is still renamed; permissions will use role defaults if saved data is invalid.
+    }
+  }
+
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const cleanName = name.trim();
@@ -108,6 +136,7 @@ export default function RolesPage() {
       const current = roles.find((role) => role.id === editingId);
       if (!current) return;
       if (current.protected) { setError("This built-in role is protected."); return; }
+      if (current.name !== cleanName) syncRenamedRole(current.name, cleanName);
       persist(roles.map((role) => role.id === editingId ? { ...role, name: cleanName, description: cleanDescription } : role));
     } else {
       persist([{ id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `role-${Date.now()}`, name: cleanName, description: cleanDescription, members: 0 }, ...roles]);
@@ -120,6 +149,18 @@ export default function RolesPage() {
     if (role.members > 0) { setError(`Reassign the ${role.members} user(s) using "${role.name}" before deleting this role.`); return; }
     if (!window.confirm(`Delete the "${role.name}" role?`)) return;
     persist(roles.filter((item) => item.id !== role.id));
+    try {
+      const raw = window.localStorage.getItem(PERMISSIONS_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : null;
+      if (parsed && typeof parsed === "object" && Object.prototype.hasOwnProperty.call(parsed, role.name)) {
+        const matrix = { ...(parsed as Record<string, unknown>) };
+        delete matrix[role.name];
+        window.localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(matrix));
+        window.dispatchEvent(new CustomEvent(PERMISSIONS_EVENT));
+      }
+    } catch {
+      // Ignore invalid optional permission data.
+    }
   }
 
   return <div className="space-y-6">
@@ -144,7 +185,7 @@ export default function RolesPage() {
           <div className="mt-4 flex items-center gap-2 text-xs text-slate-500"><UsersRound size={14} /> {role.members} {role.members === 1 ? "member" : "members"}</div>
           <div className="mt-5 flex gap-2 border-t border-slate-800 pt-4">
             <button onClick={() => openEdit(role)} className="inline-flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-200"><Edit2 size={14} /> Edit</button>
-            <button onClick={() => remove(role)} disabled={role.protected} title={role.protected ? "Built-in role cannot be deleted" : "Delete role"} className="inline-flex items-center gap-2 rounded-lg border border-rose-500/20 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-400/10 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 size={14} /> Delete</button>
+            <button onClick={() => remove(role)} disabled={role.protected} title={role.protected ? "Built-in role cannot be deleted" : "Delete role"} className="inline-flex items-center gap-2 rounded-lg border border-rose-500/20 px-3 py-2 text-xs font-medium text-rose-300 transition hover:bg-rose-400/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 size={14} /> Delete</button>
           </div>
         </article>;
       })}
