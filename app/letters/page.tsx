@@ -187,7 +187,7 @@ export default function LettersPage() {
       sender: getCurrentUser().name,
       receiver: selectedRecipient.name,
       date: new Date().toISOString().split("T")[0],
-      status: "Sent",
+      status: "Unread",
       content: content.trim(),
     };
 
