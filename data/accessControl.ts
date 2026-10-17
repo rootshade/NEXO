@@ -116,6 +116,21 @@ export function canViewTask(
   return sameName(task.assignedTo, user.name) || sameName(task.createdBy, user.name);
 }
 
+/** Check whether a correspondence participant matches the current user's display name. Supports legacy seeded labels such as "Ali Ahmadi" for user "Ali". */
+export function canViewCorrespondence(
+  sender: string,
+  receiver: string,
+  user: AccessUser
+): boolean {
+  const matchesName = (participant: string, userName: string) => {
+    const person = participant.trim().toLowerCase();
+    const name = userName.trim().toLowerCase();
+    return person === name || person.startsWith(`${name} `) || name.startsWith(`${person} `);
+  };
+
+  return matchesName(sender, user.name) || matchesName(receiver, user.name);
+}
+
 export function canAccess(user: AccessUser, permission: string): boolean {
   if (user.role === "Super Admin") return true;
 
