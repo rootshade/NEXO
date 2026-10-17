@@ -706,6 +706,21 @@ export default function TaskDetailsClient({
                 </div>
               </div>
 
+              {/* Creator */}
+              <div>
+                <p className="text-xs text-slate-500">
+                  Created By
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex size-8 items-center justify-center rounded-full bg-indigo-500/15 text-xs font-semibold text-indigo-300">
+                    {(task.createdBy || "Unknown").charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-sm text-slate-300">
+                    {task.createdBy || "Unknown"}
+                  </span>
+                </div>
+              </div>
+
               {/* Created */}
               <div>
                 <p className="text-xs text-slate-500">
