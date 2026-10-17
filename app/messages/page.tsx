@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
-import { canAccess, getCurrentUser, CURRENT_USER_EVENT } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialMessages,
@@ -25,6 +25,7 @@ export default function MessagesPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [canViewMessages, setCanViewMessages] = useState(false);
   const [canCreateMessages, setCanCreateMessages] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
 
   const [activeFilter, setActiveFilter] =
     useState<MessageFilter>("All");
@@ -41,6 +42,7 @@ export default function MessagesPage() {
   useEffect(() => {
     function syncMessagePermissions() {
       const user = getCurrentUser();
+      setCurrentUser(user);
       setCanViewMessages(canAccess(user, "messages.view"));
       setCanCreateMessages(canAccess(user, "messages.create"));
     }
@@ -124,7 +126,11 @@ export default function MessagesPage() {
 
   // Filter messages
   const filteredMessages = useMemo(() => {
-    return messages.filter((message) => {
+    const userMessages = currentUser
+      ? messages.filter((message) => canViewCorrespondence(message.sender, message.receiver, currentUser))
+      : [];
+
+    return userMessages.filter((message) => {
       const matchesFilter =
         activeFilter === "All" ||
         message.status === activeFilter;
@@ -147,7 +153,7 @@ export default function MessagesPage() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [messages, activeFilter, search]);
+  }, [messages, activeFilter, search, currentUser]);
 
   // Create new message
   function handleSendMessage() {
@@ -165,7 +171,7 @@ export default function MessagesPage() {
 
     const newMessage: Message = {
       id: Date.now(),
-      sender: "Mohammad",
+      sender: getCurrentUser().name,
       receiver: receiver.trim(),
       subject: subject.trim(),
       content: content.trim(),
