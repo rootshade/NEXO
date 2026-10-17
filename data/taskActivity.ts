@@ -1,5 +1,7 @@
 "use client";
 
+import { getCurrentUser } from "./accessControl";
+
 export type TaskActivityType =
   | "task_created"
   | "task_updated"
@@ -17,7 +19,6 @@ export type TaskActivity = {
 
 const STORAGE_KEY = "nexo_task_activity";
 export const TASK_ACTIVITY_EVENT = "nexo-task-activity-updated";
-import { getCurrentUser } from "./accessControl";
 
 function isTaskActivity(value: unknown): value is TaskActivity {
   if (!value || typeof value !== "object") return false;
