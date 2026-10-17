@@ -13,6 +13,7 @@ import {
   initialMessages,
   type Message,
 } from "@/data/messages";
+import { canAccess, getCurrentUser } from "@/data/accessControl";
 
 type MessageDetailsPageProps = {
   params: Promise<{
@@ -27,10 +28,17 @@ export default function MessageDetailsPage({
     useState<Message | null>(null);
 
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     async function loadMessage() {
       const { id } = await params;
+
+      if (!canAccess(getCurrentUser(), "messages.view")) {
+        setAccessDenied(true);
+        setLoading(false);
+        return;
+      }
 
       const savedMessages =
         localStorage.getItem("nexo-messages");
@@ -99,6 +107,16 @@ export default function MessageDetailsPage({
             Loading message...
           </p>
         </div>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-slate-900 p-8 text-center">
+        <h1 className="text-xl font-semibold text-white">Access Denied</h1>
+        <p className="mt-2 text-sm text-slate-400">You do not have permission to view messages.</p>
+        <Link href="/dashboard" className="mt-6 inline-flex rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800">Back to Dashboard</Link>
       </div>
     );
   }
