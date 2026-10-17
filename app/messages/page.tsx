@@ -178,7 +178,7 @@ export default function MessagesPage() {
         .toISOString()
         .slice(0, 16)
         .replace("T", " "),
-      status: "Read",
+      status: "Unread",
     };
 
     setMessages((currentMessages) => [
