@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import SidebarNavItem from "./SidebarNavItem";
 import { sidebarItems } from "./sidebar/sidebarData";
 import {
@@ -47,6 +48,7 @@ const permissionByHref: Record<string, string> = {
 type SidebarNavProps = { onNavigate: () => void };
 
 export default function SidebarNav({ onNavigate }: SidebarNavProps) {
+  const pathname = usePathname();
   const [revision, setRevision] = useState(0);
   const [unreadCounts, setUnreadCounts] = useState<UnreadCounts>({ letters: 0, messages: 0 });
   const [user, setUser] = useState<AccessUser | null>(null);
@@ -70,7 +72,7 @@ export default function SidebarNav({ onNavigate }: SidebarNavProps) {
     ];
     events.forEach((eventName) => window.addEventListener(eventName, refresh));
     return () => events.forEach((eventName) => window.removeEventListener(eventName, refresh));
-  }, []);
+  }, [pathname]);
 
   void revision;
   if (!user) return null;
