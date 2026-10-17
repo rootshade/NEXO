@@ -1,8 +1,6 @@
-"use client";
-
 import { tasks as initialTasks } from "./tasks";
 import { addTaskActivity } from "./taskActivity";
-import { getCurrentUser } from "./accessControl";
+import { canAccess, getCurrentUser } from "./accessControl";
 import type {
   Task,
   TaskPriority,
@@ -87,7 +85,11 @@ export function createTask(data: {
   priority: TaskPriority;
   assignedTo: string;
   deadline: string;
-}): Task {
+}): Task | undefined {
+  if (typeof window !== "undefined" && !canAccess(getCurrentUser(), "tasks.create")) {
+    return undefined;
+  }
+
   // Re-read browser storage before every write so stale in-memory state
   // cannot overwrite tasks saved by a previous page render.
   if (typeof window !== "undefined") loadTasks();
@@ -120,6 +122,10 @@ export function updateTask(
   id: number,
   data: Partial<Omit<Task, "id">>
 ): Task | undefined {
+  if (typeof window !== "undefined" && !canAccess(getCurrentUser(), "tasks.edit")) {
+    return undefined;
+  }
+
   if (typeof window !== "undefined") loadTasks();
   const index = taskList.findIndex((task) => task.id === id);
   if (index === -1) return undefined;
@@ -150,6 +156,10 @@ export function updateTask(
 }
 
 export function deleteTask(id: number): boolean {
+  if (typeof window !== "undefined" && !canAccess(getCurrentUser(), "tasks.delete")) {
+    return false;
+  }
+
   if (typeof window !== "undefined") loadTasks();
   const task = taskList.find((item) => item.id === id);
   if (!task) return false;
