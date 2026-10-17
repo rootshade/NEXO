@@ -2,6 +2,7 @@
 
 import { tasks as initialTasks } from "./tasks";
 import { addTaskActivity } from "./taskActivity";
+import { getCurrentUser } from "./accessControl";
 import type {
   Task,
   TaskPriority,
@@ -46,7 +47,17 @@ export function loadTasks(): Task[] {
     if (saved !== null) {
       const parsed: unknown = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.every(isTask)) {
-        taskList = parsed;
+        // Older saved tasks predate createdBy. Attribute them to the original
+        // default workspace owner so the migration does not hide existing work.
+        taskList = parsed.map((task) => ({
+          ...task,
+          createdBy: typeof task.createdBy === "string" && task.createdBy.trim()
+            ? task.createdBy
+            : "Mohammad",
+        }));
+        if (taskList.some((task, index) => task.createdBy !== (parsed[index] as Task).createdBy)) {
+          persistTasks();
+        }
         return [...taskList];
       }
       console.warn("Saved NEXO tasks had an invalid format; using defaults.");
@@ -93,6 +104,7 @@ export function createTask(data: {
     status: "Pending",
     priority: data.priority,
     assignedTo: data.assignedTo,
+    createdBy: typeof window !== "undefined" ? getCurrentUser().name : "Mohammad",
     createdAt: new Date().toISOString().split("T")[0],
     deadline: data.deadline,
   };
