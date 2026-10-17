@@ -12,6 +12,12 @@ const DEFAULT_USERS: AccessUser[] = [
   { id: "user-sara", name: "Sara", email: "sara@nexo.local", role: "Manager", status: "Active" },
 ];
 
+const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
+  Admin: ["dashboard", "tasks.view", "tasks.create", "tasks.edit", "tasks.delete", "letters", "messages", "users", "roles", "settings"],
+  Manager: ["dashboard", "tasks.view", "tasks.create", "tasks.edit", "letters", "messages", "settings"],
+  User: ["dashboard", "tasks.view", "letters", "messages", "settings"],
+};
+
 const PERMISSION_BY_PATH: Record<string, string> = {
   "/": "dashboard", "/dashboard": "dashboard", "/tasks": "tasks.view",
   "/letters": "letters", "/messages": "messages", "/settings": "settings",
@@ -34,8 +40,6 @@ export function getUsers(): AccessUser[] {
 export function getCurrentUser(): AccessUser {
   const users = getUsers();
 
-  // During Next.js server rendering, browser storage is unavailable.
-  // Return a stable default user until the client can read localStorage.
   if (typeof window === "undefined") {
     return users.find((user) => user.id === SUPER_ADMIN_ID) || DEFAULT_USERS[0];
   }
@@ -66,20 +70,23 @@ export function canViewTask(
 
 export function canAccess(user: AccessUser, permission: string): boolean {
   if (user.role === "Super Admin") return true;
-  try {
-    const raw: unknown = JSON.parse(window.localStorage.getItem(PERMISSIONS_KEY) || "null");
-    if (raw && typeof raw === "object") {
-      const rolePermissions = (raw as Record<string, unknown>)[user.role];
-      if (rolePermissions && typeof rolePermissions === "object") {
-        const value = (rolePermissions as Record<string, unknown>)[permission];
-        if (typeof value === "boolean") return value;
+
+  if (typeof window !== "undefined") {
+    try {
+      const raw: unknown = JSON.parse(window.localStorage.getItem(PERMISSIONS_KEY) || "null");
+      if (raw && typeof raw === "object") {
+        const rolePermissions = (raw as Record<string, unknown>)[user.role];
+        if (rolePermissions && typeof rolePermissions === "object") {
+          const value = (rolePermissions as Record<string, unknown>)[permission];
+          if (typeof value === "boolean") return value;
+        }
       }
+    } catch {
+      // Invalid browser data falls through to the built-in defaults.
     }
-  } catch { /* use defaults below */ }
-  if (user.role === "Admin") return permission !== "permissions";
-  if (user.role === "Manager") return ["dashboard", "tasks.view", "tasks.create", "tasks.edit", "letters", "messages", "settings"].includes(permission);
-  if (user.role === "User") return ["dashboard", "tasks.view", "letters", "messages", "settings"].includes(permission);
-  return false;
+  }
+
+  return DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(permission) ?? false;
 }
 
 export function permissionForPath(pathname: string): string | null {
