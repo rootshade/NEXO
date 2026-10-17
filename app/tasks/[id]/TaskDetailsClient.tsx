@@ -26,7 +26,7 @@ import TaskComments from "@/components/tasks/TaskComments";
 import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 import TaskAttachments from "@/components/tasks/TaskAttachments";
 import { cleanupTaskData } from "@/data/taskCleanup";
-import { canAccess, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewTask, getCurrentUser } from "@/data/accessControl";
 
 type TaskDetailsClientProps = {
   id: number;
@@ -71,6 +71,7 @@ export default function TaskDetailsClient({
   const [isLoading, setIsLoading] = useState(true);
   const [canEditTask, setCanEditTask] = useState(false);
   const [canDeleteTask, setCanDeleteTask] = useState(false);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState("");
@@ -108,6 +109,8 @@ export default function TaskDetailsClient({
       const user = getCurrentUser();
       setCanEditTask(canAccess(user, "tasks.edit"));
       setCanDeleteTask(canAccess(user, "tasks.delete"));
+      const currentTask = loadTasks().find((item) => item.id === id);
+      setIsAccessDenied(!!currentTask && !canViewTask(currentTask, user));
     }
 
     refreshTaskPermissions();
@@ -117,6 +120,7 @@ export default function TaskDetailsClient({
 
     const timer = window.setTimeout(() => {
       const savedTask = loadTasks().find((item) => item.id === id);
+      setIsAccessDenied(!!savedTask && !canViewTask(savedTask, getCurrentUser()));
       setTask(savedTask);
       setTitle(savedTask?.title ?? "");
       setDescription(savedTask?.description ?? "");
@@ -139,6 +143,26 @@ export default function TaskDetailsClient({
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <p className="text-sm text-slate-400">Loading task...</p>
+      </div>
+    );
+  }
+
+  if (isAccessDenied) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-white">Access Denied</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            You do not have access to view this task.
+          </p>
+          <Link
+            href="/tasks"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-medium text-slate-900 transition hover:bg-slate-200"
+          >
+            <ArrowLeft size={16} />
+            Back to Tasks
+          </Link>
+        </div>
       </div>
     );
   }
