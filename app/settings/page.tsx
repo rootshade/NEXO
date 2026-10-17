@@ -202,13 +202,13 @@ export default function SettingsPage() {
       </div>
 
       {/* Profile */}
-      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
-        <div className="border-b border-slate-700/80 px-6 py-5">
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-slate-800 p-2.5">
+            <div className="rounded-xl border border-indigo-400/15 bg-indigo-400/10 p-2.5">
               <User
                 size={19}
-                className="text-slate-300"
+                className="text-indigo-300"
               />
             </div>
 
@@ -224,7 +224,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 px-6 py-6 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 px-5 py-6 md:grid-cols-2 sm:px-6">
           {/* Full Name */}
           <div>
             <label
@@ -294,13 +294,13 @@ export default function SettingsPage() {
       </section>
 
       {/* Preferences */}
-      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
-        <div className="border-b border-slate-700/80 px-6 py-5">
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-slate-800 p-2.5">
+            <div className="rounded-xl border border-indigo-400/15 bg-indigo-400/10 p-2.5">
               <Bell
                 size={19}
-                className="text-slate-300"
+                className="text-indigo-300"
               />
             </div>
 
@@ -316,7 +316,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="space-y-5 px-6 py-6">
+        <div className="space-y-5 px-5 py-6 sm:px-6">
           {/* Language */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -353,7 +353,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Notifications */}
-          <div className="flex items-center justify-between gap-4 border-t border-slate-700/80 pt-5">
+          <div className="flex items-center justify-between gap-4 border-t border-slate-800 pt-5">
             <div className="flex items-center gap-3">
               <Bell
                 size={18}
@@ -413,13 +413,13 @@ export default function SettingsPage() {
       </section>
 
       {/* Security */}
-      <section className="rounded-2xl border border-indigo-400/15 bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/30">
-        <div className="border-b border-slate-700/80 px-6 py-5">
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-slate-800 p-2.5">
+            <div className="rounded-xl border border-indigo-400/15 bg-indigo-400/10 p-2.5">
               <Lock
                 size={19}
-                className="text-slate-300"
+                className="text-indigo-300"
               />
             </div>
 
@@ -435,7 +435,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="px-6 py-6">
+        <div className="px-5 py-6 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-medium text-white">
@@ -526,7 +526,7 @@ export default function SettingsPage() {
             "
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-slate-700/80 px-6 py-5">
+            <div className="flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-indigo-950/70 to-slate-900 px-6 py-5">
               <div>
                 <h2 className="text-lg font-semibold text-white">
                   Change Password
@@ -555,7 +555,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="space-y-5 px-6 py-6">
+            <div className="space-y-5 px-5 py-6 sm:px-6">
               {/* Current Password */}
               <div>
                 <label
