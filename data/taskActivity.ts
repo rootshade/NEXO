@@ -17,7 +17,7 @@ export type TaskActivity = {
 
 const STORAGE_KEY = "nexo_task_activity";
 export const TASK_ACTIVITY_EVENT = "nexo-task-activity-updated";
-const CURRENT_USER = "Mohammad";
+import { getCurrentUser } from "./accessControl";
 
 function isTaskActivity(value: unknown): value is TaskActivity {
   if (!value || typeof value !== "object") return false;
@@ -72,15 +72,17 @@ export function addTaskActivity(
   taskId: number,
   type: TaskActivityType,
   message: string,
-  actor = CURRENT_USER
+  actor?: string
 ): TaskActivity | undefined {
   if (typeof window === "undefined") return undefined;
+
+  const activityActor = actor?.trim() || getCurrentUser().name || "Mohammad";
 
   const activity: TaskActivity = {
     id: Math.max(Date.now(), ...readAllActivities().map((item) => item.id + 1)),
     taskId,
     type,
-    actor,
+    actor: activityActor,
     message,
     createdAt: new Date().toISOString(),
   };
