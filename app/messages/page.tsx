@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
-import { canAccess, canViewCorrespondence, getCurrentUser, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialMessages,
@@ -26,6 +26,7 @@ export default function MessagesPage() {
   const [canViewMessages, setCanViewMessages] = useState(false);
   const [canCreateMessages, setCanCreateMessages] = useState(false);
   const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
+  const [availableRecipients, setAvailableRecipients] = useState<AccessUser[]>([]);
 
   const [activeFilter, setActiveFilter] =
     useState<MessageFilter>("All");
@@ -43,6 +44,7 @@ export default function MessagesPage() {
     function syncMessagePermissions() {
       const user = getCurrentUser();
       setCurrentUser(user);
+      setAvailableRecipients(getUsers().filter((candidate) => candidate.status === "Active" && candidate.id !== user.id));
       setCanViewMessages(canAccess(user, "messages.view"));
       setCanCreateMessages(canAccess(user, "messages.create"));
     }
@@ -161,18 +163,15 @@ export default function MessagesPage() {
       setCanCreateMessages(false);
       return;
     }
-    if (
-      !receiver.trim() ||
-      !subject.trim() ||
-      !content.trim()
-    ) {
+    const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
+    if (!selectedRecipient || !subject.trim() || !content.trim()) {
       return;
     }
 
     const newMessage: Message = {
       id: Date.now(),
       sender: getCurrentUser().name,
-      receiver: receiver.trim(),
+      receiver: selectedRecipient.name,
       subject: subject.trim(),
       content: content.trim(),
       date: new Date()
@@ -336,25 +335,18 @@ export default function MessagesPage() {
                     Receiver
                   </label>
 
-                  <input
-                    type="text"
+                  <select
                     value={receiver}
-                    onChange={(event) =>
-                      setReceiver(event.target.value)
-                    }
-                    placeholder="Enter receiver name..."
-                    className="
-                      w-full
-                      rounded-xl
-                      border border-slate-700/80
-                      bg-slate-950
-                      px-4 py-3
-                      text-sm text-white
-                      outline-none
-                      placeholder:text-slate-600
-                      focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10
-                    "
-                  />
+                    onChange={(event) => setReceiver(event.target.value)}
+                    className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
+                  >
+                    <option value="">Select an active recipient...</option>
+                    {availableRecipients.map((recipient) => (
+                      <option key={recipient.id} value={recipient.name}>
+                        {recipient.name} ({recipient.role})
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Subject */}
