@@ -260,9 +260,9 @@ export default function LettersPage() {
               max-h-[90vh]
               overflow-y-auto
               rounded-2xl
-              border border-slate-700/80
+              border border-slate-700
               bg-slate-900
-              shadow-2xl
+              shadow-2xl shadow-black/40
             "
             onClick={(event) =>
               event.stopPropagation()
@@ -272,7 +272,8 @@ export default function LettersPage() {
             <div
               className="
                 flex items-center justify-between
-                border-b border-slate-700/80
+                border-b border-slate-800
+                bg-gradient-to-r from-indigo-950/70 to-slate-900
                 px-6 py-5
               "
             >
@@ -420,7 +421,8 @@ export default function LettersPage() {
             <div
               className="
                 flex flex-col-reverse gap-3
-                border-t border-slate-700/80
+                border-t border-slate-800
+                bg-slate-950/40
                 px-6 py-5
                 sm:flex-row sm:justify-end
               "
@@ -463,7 +465,9 @@ export default function LettersPage() {
       )}
 
       {/* Search */}
-      <div className="relative">
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 p-4 sm:p-5">
+          <div className="relative">
         <Search
           size={18}
           className="
@@ -495,8 +499,11 @@ export default function LettersPage() {
         />
       </div>
 
+          </div>
+        </div>
+
       {/* Filters */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex flex-wrap gap-2 border-b border-slate-800 px-4 py-4 sm:px-5">
         {filters.map((filter) => {
           const active =
             activeFilter === filter;
@@ -516,8 +523,8 @@ export default function LettersPage() {
                 transition-colors
                 ${
                   active
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-400 hover:bg-cyan-400/10 hover:text-cyan-200"
+                    ? "border border-cyan-300/20 bg-cyan-300/10 text-cyan-200"
+                    : "border border-transparent text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white"
                 }
               `}
             >
@@ -528,7 +535,7 @@ export default function LettersPage() {
       </div>
 
       {/* Letters */}
-      <div className="space-y-3">
+      <div className="space-y-3 p-4 sm:p-5">
         {filteredLetters.map((letter) => (
           <Link
             key={letter.id}
@@ -537,12 +544,14 @@ export default function LettersPage() {
               group
               block
               rounded-2xl
-              border border-slate-700/80
-              bg-slate-900
+              border border-slate-800
+              bg-gradient-to-br from-slate-900 to-slate-900/80
               p-5
-              transition-colors
-              hover:border-slate-700
-              hover:bg-slate-900/80
+              shadow-sm shadow-black/10
+              transition duration-200
+              hover:-translate-y-0.5
+              hover:border-cyan-400/30
+              hover:bg-slate-800/70
             "
           >
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -553,8 +562,9 @@ export default function LettersPage() {
                     flex h-11 w-11 shrink-0
                     items-center justify-center
                     rounded-xl
-                    bg-slate-800
-                    text-slate-400
+                    border border-indigo-400/15
+                    bg-gradient-to-br from-indigo-400/10 to-cyan-400/10
+                    text-cyan-200
                   "
                 >
                   {letter.status === "Unread" ? (
@@ -602,10 +612,10 @@ export default function LettersPage() {
                     text-xs font-medium
                     ${
                       letter.status === "Unread"
-                        ? "bg-blue-500/10 text-blue-400"
+                        ? "border border-sky-400/20 bg-sky-400/10 text-sky-300"
                         : letter.status === "Read"
-                        ? "bg-slate-800 text-slate-400"
-                        : "bg-green-500/10 text-green-400"
+                        ? "border border-slate-700 bg-slate-800 text-slate-300"
+                        : "border border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
                     }
                   `}
                 >
@@ -620,6 +630,7 @@ export default function LettersPage() {
           </Link>
         ))}
       </div>
+      </section>
 
       {/* Empty State */}
       {filteredLetters.length === 0 && (
