@@ -13,7 +13,7 @@ import {
   initialMessages,
   type Message,
 } from "@/data/messages";
-import { canAccess, canViewCorrespondence, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, isCorrespondenceRecipient } from "@/data/accessControl";
 
 type MessageDetailsPageProps = {
   params: Promise<{
@@ -72,7 +72,8 @@ export default function MessageDetailsPage({
        * Only mark the message as Read
        * when the user actually opens it.
        */
-      if (foundMessage.status === "Unread") {
+      const currentUser = getCurrentUser();
+      if (foundMessage.status === "Unread" && isCorrespondenceRecipient(foundMessage.receiver, currentUser)) {
         const updatedMessages = messages.map(
           (item) =>
             item.id === foundMessage.id
