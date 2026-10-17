@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 
 type UserStatus = "Active" | "Inactive";
-type UserRole = "Super Admin" | "Admin" | "Manager" | "User";
+type UserRole = string;
 
 type AppUser = {
   id: string;
@@ -39,7 +39,20 @@ const DEFAULT_USERS: AppUser[] = [
   { id: "user-sara", name: "Sara", email: "sara@nexo.local", role: "Manager", status: "Active", createdAt: "2026-01-03" },
 ];
 
-const roles: UserRole[] = ["Super Admin", "Admin", "Manager", "User"];
+const DEFAULT_ROLE_NAMES = ["Super Admin", "Admin", "Manager", "User"];
+const ROLES_STORAGE_KEY = "nexo-roles";
+const ROLES_EVENT = "nexo-roles-updated";
+
+function readRoleNames(): string[] {
+  try {
+    const raw = window.localStorage.getItem(ROLES_STORAGE_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    const names = Array.isArray(parsed) ? parsed.map((item) => item && typeof item.name === "string" ? item.name.trim() : "").filter(Boolean) : [];
+    return Array.from(new Set([...DEFAULT_ROLE_NAMES, ...names]));
+  } catch {
+    return DEFAULT_ROLE_NAMES;
+  }
+}
 
 function readUsers(): AppUser[] {
   try {
@@ -52,7 +65,7 @@ function readUsers(): AppUser[] {
       typeof item.id === "string" &&
       typeof item.name === "string" &&
       typeof item.email === "string" &&
-      roles.includes(item.role) &&
+      typeof item.role === "string" && item.role.trim().length > 0 &&
       (item.status === "Active" || item.status === "Inactive") &&
       typeof item.createdAt === "string"
     );
@@ -85,6 +98,7 @@ function roleStyle(role: UserRole) {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [availableRoles, setAvailableRoles] = useState<string[]>(DEFAULT_ROLE_NAMES);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | UserStatus>("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -95,14 +109,16 @@ export default function UsersPage() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setUsers(readUsers()), 0);
-    const refresh = () => setUsers(readUsers());
+    const timer = window.setTimeout(() => { setUsers(readUsers()); setAvailableRoles(readRoleNames()); }, 0);
+    const refresh = () => { setUsers(readUsers()); setAvailableRoles(readRoleNames()); };
     window.addEventListener("storage", refresh);
     window.addEventListener(USER_EVENT, refresh);
+    window.addEventListener(ROLES_EVENT, refresh);
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("storage", refresh);
       window.removeEventListener(USER_EVENT, refresh);
+      window.removeEventListener(ROLES_EVENT, refresh);
     };
   }, []);
 
@@ -331,7 +347,7 @@ export default function UsersPage() {
               <div>
                 <label htmlFor="user-role" className="mb-2 block text-sm font-medium text-slate-300">Role</label>
                 <select id="user-role" disabled={users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin"))} value={users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) ? "Super Admin" : role} onChange={(event) => setRole(event.target.value as UserRole)} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/60 disabled:cursor-not-allowed disabled:opacity-60">
-                  {(users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) ? ["Super Admin"] : roles.filter((item) => item !== "Super Admin")).map((item) => <option key={item} value={item}>{item}</option>)}
+                  {(users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) ? ["Super Admin"] : availableRoles.filter((item) => item !== "Super Admin")).map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
                 {users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) && <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300"><ShieldCheck size={13} /> Super Admin role is protected and cannot be changed.</p>}
               </div>
