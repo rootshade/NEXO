@@ -46,7 +46,7 @@ export default function QuickActions() {
                 transition-all
                 duration-200
                 hover:border-cyan-400/30
-                hover:bg-cyan-400/10/80
+                hover:bg-cyan-400/5
               "
             >
               <div className="flex items-start gap-4">
