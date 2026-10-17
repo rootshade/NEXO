@@ -10,12 +10,13 @@ import {
   type Message,
 } from "@/data/messages";
 
-type MessageFilter = "All" | "Unread" | "Read";
+type MessageFilter = "All" | "Unread" | "Read" | "Sent";
 
 const filters: MessageFilter[] = [
   "All",
   "Unread",
   "Read",
+  "Sent",
 ];
 
 export default function MessagesPage() {
@@ -133,9 +134,12 @@ export default function MessagesPage() {
       : [];
 
     return userMessages.filter((message) => {
+      const isSender = currentUser?.name === message.sender;
       const matchesFilter =
         activeFilter === "All" ||
-        message.status === activeFilter;
+        (activeFilter === "Sent" && isSender) ||
+        (activeFilter === "Unread" && !isSender && message.status === "Unread") ||
+        (activeFilter === "Read" && !isSender && message.status === "Read");
 
       const searchValue = search.toLowerCase();
 
@@ -247,10 +251,10 @@ export default function MessagesPage() {
       {/* Message statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Total Messages", value: messages.length, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
-          { label: "Unread Messages", value: messages.filter((message) => message.status === "Unread").length, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
-          { label: "Read Messages", value: messages.filter((message) => message.status === "Read").length, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
-          { label: "Sent by Me", value: messages.filter((message) => message.sender === "Mohammad").length, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
+          { label: "Total Messages", value: currentUser ? messages.filter((message) => canViewCorrespondence(message.sender, message.receiver, currentUser)).length : 0, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
+          { label: "Unread Messages", value: currentUser ? messages.filter((message) => message.receiver === currentUser.name && message.status === "Unread").length : 0, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
+          { label: "Read Messages", value: currentUser ? messages.filter((message) => message.receiver === currentUser.name && message.status === "Read").length : 0, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
+          { label: "Sent by Me", value: currentUser ? messages.filter((message) => message.sender === currentUser.name).length : 0, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
         ].map((stat) => {
           const Icon = stat.icon;
           return <div key={stat.label} className={`rounded-2xl border ${stat.border} bg-slate-900 p-5 transition hover:-translate-y-0.5 hover:bg-slate-800/80`}>
@@ -472,7 +476,7 @@ export default function MessagesPage() {
             return (
               <button key={filter} type="button" onClick={() => setActiveFilter(filter)} className={`rounded-lg border px-3.5 py-2 text-sm font-medium transition ${active ? "border-cyan-300/30 bg-cyan-300/10 text-cyan-200" : "border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600 hover:text-white"}`}>
                 {filter}
-                {filter === "Unread" && <span className="ml-2 text-xs opacity-70">{messages.filter((message) => message.status === "Unread").length}</span>}
+                {filter === "Unread" && <span className="ml-2 text-xs opacity-70">{currentUser ? messages.filter((message) => message.receiver === currentUser.name && message.status === "Unread").length : 0}</span>}
               </button>
             );
           })}
@@ -511,7 +515,7 @@ export default function MessagesPage() {
                       truncate
                       text-base
                       ${
-                        message.status === "Unread"
+                        message.receiver === currentUser?.name && message.status === "Unread"
                           ? "font-semibold text-white"
                           : "font-medium text-slate-300"
                       }
@@ -520,7 +524,7 @@ export default function MessagesPage() {
                     {message.subject}
                   </h2>
 
-                  {message.status === "Unread" && (
+                  {message.receiver === currentUser?.name && message.status === "Unread" && (
                     <span
                       className="
                         rounded-full
