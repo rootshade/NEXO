@@ -26,6 +26,7 @@ import TaskComments from "@/components/tasks/TaskComments";
 import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 import TaskAttachments from "@/components/tasks/TaskAttachments";
 import { cleanupTaskData } from "@/data/taskCleanup";
+import { canAccess, getCurrentUser } from "@/data/accessControl";
 
 type TaskDetailsClientProps = {
   id: number;
@@ -68,6 +69,8 @@ export default function TaskDetailsClient({
 }: TaskDetailsClientProps) {
   const [task, setTask] = useState<Task | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [canEditTask, setCanEditTask] = useState(false);
+  const [canDeleteTask, setCanDeleteTask] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState("");
@@ -101,6 +104,17 @@ export default function TaskDetailsClient({
   const router = useRouter();
 
   useEffect(() => {
+    function refreshTaskPermissions() {
+      const user = getCurrentUser();
+      setCanEditTask(canAccess(user, "tasks.edit"));
+      setCanDeleteTask(canAccess(user, "tasks.delete"));
+    }
+
+    refreshTaskPermissions();
+    window.addEventListener("storage", refreshTaskPermissions);
+    window.addEventListener("nexo-current-user-updated", refreshTaskPermissions);
+    window.addEventListener("nexo-permissions-updated", refreshTaskPermissions);
+
     const timer = window.setTimeout(() => {
       const savedTask = loadTasks().find((item) => item.id === id);
       setTask(savedTask);
@@ -113,7 +127,12 @@ export default function TaskDetailsClient({
       setIsLoading(false);
     }, 0);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("storage", refreshTaskPermissions);
+      window.removeEventListener("nexo-current-user-updated", refreshTaskPermissions);
+      window.removeEventListener("nexo-permissions-updated", refreshTaskPermissions);
+    };
   }, [id]);
 
   if (isLoading) {
@@ -176,6 +195,12 @@ export default function TaskDetailsClient({
   function handleSave() {
     setEditError("");
 
+    if (!canEditTask) {
+      setEditError("You do not have permission to edit tasks.");
+      setIsEditing(false);
+      return;
+    }
+
     if (
       !title.trim() ||
       !description.trim() ||
@@ -226,6 +251,11 @@ export default function TaskDetailsClient({
   }
 
   async function handleDelete() {
+    if (!canDeleteTask) {
+      window.alert("You do not have permission to delete tasks.");
+      return;
+    }
+
     const confirmed = window.confirm(
       "Are you sure you want to delete this task? Its comments and attachments will also be removed."
     );
@@ -275,63 +305,46 @@ export default function TaskDetailsClient({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (isEditing) {
-                  handleCancelEdit();
-                } else {
-                  setEditError("");
-                  setIsEditing(true);
-                }
-              }}
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                border
-                border-slate-700
-                bg-slate-900
-                px-4
-                py-2.5
-                text-sm
-                font-medium
-                text-white
-                transition
-                hover:bg-slate-800
-              "
-            >
-              <Pencil size={16} />
+          {(canEditTask || canDeleteTask) && (
+            <div className="flex gap-2">
+              {canEditTask && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isEditing) {
+                      handleCancelEdit();
+                    } else {
+                      setEditError("");
+                      setIsEditing(true);
+                    }
+                  }}
+                  className="
+                    inline-flex items-center gap-2 rounded-xl border
+                    border-slate-700 bg-slate-900 px-4 py-2.5 text-sm
+                    font-medium text-white transition hover:bg-slate-800
+                  "
+                >
+                  <Pencil size={16} />
+                  {isEditing ? "Cancel" : "Edit"}
+                </button>
+              )}
 
-              {isEditing ? "Cancel" : "Edit"}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="
-                inline-flex
-                items-center
-                gap-2
-                rounded-xl
-                border
-                border-red-500/20
-                bg-red-500/10
-                px-4
-                py-2.5
-                text-sm
-                font-medium
-                text-red-400
-                transition
-                hover:bg-red-500/20
-              "
-            >
-              <Trash2 size={16} />
-              Delete
-            </button>
-          </div>
+              {canDeleteTask && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="
+                    inline-flex items-center gap-2 rounded-xl border
+                    border-red-500/20 bg-red-500/10 px-4 py-2.5 text-sm
+                    font-medium text-red-400 transition hover:bg-red-500/20
+                  "
+                >
+                  <Trash2 size={16} />
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
