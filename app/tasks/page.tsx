@@ -8,6 +8,7 @@ import CreateTaskModal from "@/components/tasks/CreateTaskModal";
 
 import { getTasks, loadTasks, createTask } from "@/data/taskStore";
 import type { Task } from "@/data/tasks";
+import { canAccess, getCurrentUser } from "@/data/accessControl";
 
 type SortOption = "newest" | "oldest" | "deadline" | "priority";
 type PriorityFilter = "All" | "Low" | "Medium" | "High";
@@ -22,6 +23,21 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("All");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [canCreateTasks, setCanCreateTasks] = useState(false);
+
+  useEffect(() => {
+    const refreshAccess = () => setCanCreateTasks(canAccess(getCurrentUser(), "tasks.create"));
+    const timer = window.setTimeout(refreshAccess, 0);
+    window.addEventListener("nexo-current-user-updated", refreshAccess);
+    window.addEventListener("nexo-permissions-updated", refreshAccess);
+    window.addEventListener("storage", refreshAccess);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("nexo-current-user-updated", refreshAccess);
+      window.removeEventListener("nexo-permissions-updated", refreshAccess);
+      window.removeEventListener("storage", refreshAccess);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setTasks(loadTasks()), 0);
@@ -88,9 +104,9 @@ export default function TasksPage() {
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">Task Management</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Create, organize, track, and complete work across your NEXO workspace.</p>
           </div>
-          <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200">
+          {canCreateTasks && <button type="button" onClick={() => setIsCreateModalOpen(true)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200">
             <Plus size={18} /> Add Task
-          </button>
+          </button>}
         </div>
       </div>
 
