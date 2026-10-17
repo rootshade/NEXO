@@ -524,18 +524,17 @@ export default function MessagesPage() {
                     {message.subject}
                   </h2>
 
-                  {message.receiver === currentUser?.name && message.status === "Unread" && (
-                    <span
-                      className="
-                        rounded-full
-                        bg-slate-700
-                        px-2 py-0.5
-                        text-[11px]
-                        font-medium
-                        text-slate-200
-                      "
-                    >
+                  {message.sender === currentUser?.name ? (
+                    <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-300">
+                      Sent
+                    </span>
+                  ) : message.status === "Unread" ? (
+                    <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[11px] font-medium text-slate-200">
                       Unread
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-slate-700 bg-slate-800 px-2 py-0.5 text-[11px] font-medium text-slate-400">
+                      Read
                     </span>
                   )}
                 </div>
