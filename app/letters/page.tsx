@@ -500,7 +500,6 @@ export default function LettersPage() {
       </div>
 
           </div>
-        </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-2 border-b border-slate-800 px-4 py-4 sm:px-5">
