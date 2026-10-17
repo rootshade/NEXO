@@ -13,6 +13,7 @@ import {
   initialLetters,
   type Letter,
 } from "@/data/letters";
+import { canAccess, getCurrentUser } from "@/data/accessControl";
 
 type LetterDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -50,12 +51,20 @@ export default function LetterDetailsPage({
 }: LetterDetailsPageProps) {
   const [letter, setLetter] = useState<Letter | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadLetter() {
       const { id } = await params;
+      if (!canAccess(getCurrentUser(), "letters.view")) {
+        if (!cancelled) {
+          setAccessDenied(true);
+          setLoading(false);
+        }
+        return;
+      }
       const letters = getLettersFromStorage();
       const letterId = Number(id);
 
@@ -126,6 +135,18 @@ export default function LetterDetailsPage({
           <p className="text-sm text-slate-500">
             Loading letter...
           </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <main className="p-6">
+        <div className="mx-auto flex min-h-[50vh] max-w-4xl flex-col items-center justify-center text-center">
+          <h1 className="text-xl font-semibold text-white">Access Denied</h1>
+          <p className="mt-2 text-sm text-slate-500">You do not have permission to view letters.</p>
+          <Link href="/dashboard" className="mt-6 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800">Back to Dashboard</Link>
         </div>
       </main>
     );
