@@ -10,7 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { canAccess, getCurrentUser, CURRENT_USER_EVENT } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialLetters,
@@ -37,6 +37,7 @@ export default function LettersPage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [canViewLetters, setCanViewLetters] = useState(false);
   const [canCreateLetters, setCanCreateLetters] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
 
   const [activeFilter, setActiveFilter] =
     useState<LetterFilter>("All");
@@ -52,13 +53,18 @@ export default function LettersPage() {
 
   const [error, setError] = useState("");
 
-  const unreadCount = letters.filter((letter) => letter.status === "Unread").length;
-  const readCount = letters.filter((letter) => letter.status === "Read").length;
-  const sentCount = letters.filter((letter) => letter.status === "Sent").length;
+  const visibleLetters = currentUser
+    ? letters.filter((letter) => canViewCorrespondence(letter.sender, letter.receiver, currentUser))
+    : [];
+
+  const unreadCount = visibleLetters.filter((letter) => letter.status === "Unread").length;
+  const readCount = visibleLetters.filter((letter) => letter.status === "Read").length;
+  const sentCount = visibleLetters.filter((letter) => letter.status === "Sent").length;
 
   useEffect(() => {
     function syncLetterPermissions() {
       const user = getCurrentUser();
+      setCurrentUser(user);
       setCanViewLetters(canAccess(user, "letters.view"));
       setCanCreateLetters(canAccess(user, "letters.create"));
     }
@@ -127,7 +133,7 @@ export default function LettersPage() {
   /*
    * Filter letters
    */
-  const filteredLetters = letters.filter((letter) => {
+  const filteredLetters = visibleLetters.filter((letter) => {
     const matchesFilter =
       activeFilter === "All" ||
       letter.status === activeFilter;
@@ -175,7 +181,7 @@ export default function LettersPage() {
     const newLetter: Letter = {
       id: Date.now(),
       subject: subject.trim(),
-      sender: "Mohammad",
+      sender: getCurrentUser().name,
       receiver: receiver.trim(),
       date: new Date().toISOString().split("T")[0],
       status: "Sent",
