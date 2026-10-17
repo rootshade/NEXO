@@ -13,7 +13,7 @@ import {
   initialLetters,
   type Letter,
 } from "@/data/letters";
-import { canAccess, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, getCurrentUser } from "@/data/accessControl";
 
 type LetterDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -81,6 +81,14 @@ export default function LetterDetailsPage({
 
       if (!foundLetter) {
         if (!cancelled) {
+          setLoading(false);
+        }
+        return;
+      }
+
+      if (!canViewCorrespondence(foundLetter.sender, foundLetter.receiver, getCurrentUser())) {
+        if (!cancelled) {
+          setAccessDenied(true);
           setLoading(false);
         }
         return;
