@@ -158,9 +158,10 @@ export default function UsersPage() {
       const existing = users.find((user) => user.id === editingId);
       if (!existing) return;
       // Super Admin identity and role cannot be changed from this screen.
-      const nextRole = existing.id === SUPER_ADMIN_ID ? "Super Admin" : role;
+      const isProtectedAdmin = existing.id === SUPER_ADMIN_ID || existing.role === "Super Admin";
+      const nextRole = isProtectedAdmin ? "Super Admin" : role;
       persist(users.map((user) => user.id === editingId
-        ? { ...user, name: cleanName, email: cleanEmail, role: nextRole, status: existing.id === SUPER_ADMIN_ID ? "Active" : user.status }
+        ? { ...user, name: cleanName, email: cleanEmail, role: nextRole, status: isProtectedAdmin ? "Active" : user.status }
         : user));
     } else {
       const newUser: AppUser = {
@@ -329,10 +330,10 @@ export default function UsersPage() {
               </div>
               <div>
                 <label htmlFor="user-role" className="mb-2 block text-sm font-medium text-slate-300">Role</label>
-                <select id="user-role" disabled={editingId === SUPER_ADMIN_ID} value={editingId === SUPER_ADMIN_ID ? "Super Admin" : role} onChange={(event) => setRole(event.target.value as UserRole)} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/60 disabled:cursor-not-allowed disabled:opacity-60">
-                  {(editingId === SUPER_ADMIN_ID ? ["Super Admin"] : roles.filter((item) => item !== "Super Admin")).map((item) => <option key={item} value={item}>{item}</option>)}
+                <select id="user-role" disabled={users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin"))} value={users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) ? "Super Admin" : role} onChange={(event) => setRole(event.target.value as UserRole)} className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400/60 disabled:cursor-not-allowed disabled:opacity-60">
+                  {(users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) ? ["Super Admin"] : roles.filter((item) => item !== "Super Admin")).map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
-                {editingId === SUPER_ADMIN_ID && <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300"><ShieldCheck size={13} /> Super Admin role is protected and cannot be changed.</p>}
+                {users.some((user) => user.id === editingId && (user.id === SUPER_ADMIN_ID || user.role === "Super Admin")) && <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-300"><ShieldCheck size={13} /> Super Admin role is protected and cannot be changed.</p>}
               </div>
               {formError && <p role="alert" className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{formError}</p>}
             </div>
