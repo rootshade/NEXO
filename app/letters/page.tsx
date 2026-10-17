@@ -10,6 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { canAccess, getCurrentUser, CURRENT_USER_EVENT } from "@/data/accessControl";
 
 import {
   initialLetters,
@@ -34,6 +35,8 @@ export default function LettersPage() {
     useState<Letter[]>(initialLetters);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [canViewLetters, setCanViewLetters] = useState(false);
+  const [canCreateLetters, setCanCreateLetters] = useState(false);
 
   const [activeFilter, setActiveFilter] =
     useState<LetterFilter>("All");
@@ -52,6 +55,25 @@ export default function LettersPage() {
   const unreadCount = letters.filter((letter) => letter.status === "Unread").length;
   const readCount = letters.filter((letter) => letter.status === "Read").length;
   const sentCount = letters.filter((letter) => letter.status === "Sent").length;
+
+  useEffect(() => {
+    function syncLetterPermissions() {
+      const user = getCurrentUser();
+      setCanViewLetters(canAccess(user, "letters.view"));
+      setCanCreateLetters(canAccess(user, "letters.create"));
+    }
+    syncLetterPermissions();
+    window.addEventListener(CURRENT_USER_EVENT, syncLetterPermissions);
+    window.addEventListener("nexo-permissions-updated", syncLetterPermissions);
+    window.addEventListener("nexo-users-updated", syncLetterPermissions);
+    window.addEventListener("storage", syncLetterPermissions);
+    return () => {
+      window.removeEventListener(CURRENT_USER_EVENT, syncLetterPermissions);
+      window.removeEventListener("nexo-permissions-updated", syncLetterPermissions);
+      window.removeEventListener("nexo-users-updated", syncLetterPermissions);
+      window.removeEventListener("storage", syncLetterPermissions);
+    };
+  }, []);
 
   /*
    * Load letters from localStorage after the initial render.
@@ -130,6 +152,11 @@ export default function LettersPage() {
    * Send new letter
    */
   function handleSendLetter() {
+    if (!canAccess(getCurrentUser(), "letters.create")) {
+      setCanCreateLetters(false);
+      setError("You do not have permission to send letters.");
+      return;
+    }
     if (!receiver.trim()) {
       setError("Please enter a receiver.");
       return;
@@ -178,6 +205,15 @@ export default function LettersPage() {
     setError("");
   }
 
+  if (!canViewLetters) {
+    return (
+      <div className="rounded-2xl border border-red-500/20 bg-slate-900 p-8 text-center">
+        <h1 className="text-xl font-semibold text-white">Access Denied</h1>
+        <p className="mt-2 text-sm text-slate-400">You do not have permission to view letters.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Page hero */}
@@ -195,7 +231,7 @@ export default function LettersPage() {
           </p>
         </div>
 
-        <button
+        {canCreateLetters && <button
           type="button"
           onClick={() => {
             setError("");
@@ -214,7 +250,7 @@ export default function LettersPage() {
         >
           <Plus size={18} />
           New Letter
-        </button>
+        </button>}
         </div>
       </div>
 
@@ -243,7 +279,7 @@ export default function LettersPage() {
       </div>
 
       {/* New Letter Modal */}
-      {showNewLetter && (
+      {showNewLetter && canCreateLetters && (
         <div
           className="
             fixed inset-0 z-50
