@@ -14,6 +14,9 @@ const pageTitles: Record<string, string> = {
   "/letters": "Letters",
   "/messages": "Messages",
   "/settings": "Settings",
+  "/users": "Users",
+  "/roles": "Roles",
+  "/permissions": "Permissions",
 };
 
 export default function Header({
