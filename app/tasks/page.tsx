@@ -24,6 +24,7 @@ export default function TasksPage() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("All");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [canViewTasks, setCanViewTasks] = useState(false);
   const [canCreateTasks, setCanCreateTasks] = useState(false);
   const [currentUser, setCurrentUser] = useState<AccessUser>({ id: "user-mohammad", name: "Mohammad", email: "mohammad@nexo.local", role: "Super Admin", status: "Active" });
 
@@ -31,6 +32,7 @@ export default function TasksPage() {
     const refreshAccess = () => {
       const user = getCurrentUser();
       setCurrentUser(user);
+      setCanViewTasks(canAccess(user, "tasks.view"));
       setCanCreateTasks(canAccess(user, "tasks.create"));
     };
     const refreshTasks = () => setTasks(loadTasks());
@@ -53,6 +55,19 @@ export default function TasksPage() {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  if (!canViewTasks) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-white">Access Denied</h1>
+          <p className="mt-2 text-sm text-slate-400">
+            You do not have permission to view tasks.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const visibleTasks = tasks.filter((task) => canViewTask(task, currentUser));
 
