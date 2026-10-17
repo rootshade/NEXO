@@ -5,6 +5,8 @@ import {
   MessageSquare,
   Users,
   Settings,
+  ShieldCheck,
+  LockKeyhole,
 } from "lucide-react";
 
 export const sidebarItems = [
@@ -32,6 +34,16 @@ export const sidebarItems = [
     label: "Users",
     icon: Users,
     href: "/users",
+  },
+  {
+    label: "Roles",
+    icon: ShieldCheck,
+    href: "/roles",
+  },
+  {
+    label: "Permissions",
+    icon: LockKeyhole,
+    href: "/permissions",
   },
   {
     label: "Settings",
