@@ -111,6 +111,7 @@ export default function PermissionsPage() {
       const next = { ...matrix, ...defaults(["Super Admin"]) };
       window.localStorage.setItem(PERMISSIONS_KEY, JSON.stringify(next));
       setMatrix(next);
+      window.dispatchEvent(new CustomEvent("nexo-permissions-updated"));
       setMessage("Permissions saved in this browser.");
     } catch {
       setMessage("Unable to save. Check browser storage.");
