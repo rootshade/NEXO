@@ -280,8 +280,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
               : "right-0"
           } ${
             notificationPosition && notificationPosition.y > window.innerHeight / 2
-              ? "bottom-12 translate-y-1"
-              : "top-12 -translate-y-1"
+              ? "bottom-10"
+              : "top-10"
           }`}
         >
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
