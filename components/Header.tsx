@@ -235,8 +235,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
       }
       const savedDismissed = readStoredArray<string>("nexo-notification-dismissed");
       const savedRead = readStoredArray<string>("nexo-notification-read");
-      setDismissedNotificationIds(savedDismissed);
-      setReadNotificationIds(savedRead);
       setNotifications(mergedHistory.filter((item) => !savedDismissed.includes(item.id)));
     }
 
