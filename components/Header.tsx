@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import {
   CURRENT_USER_EVENT,
+  canViewTask,
   getCurrentUser,
   isCorrespondenceRecipient,
   type AccessUser,
@@ -54,14 +55,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const pathname = usePathname();
   const title = pageTitles[pathname] ?? "Page";
 
-  const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     function syncNotifications() {
       const user = getCurrentUser();
-      setCurrentUser(user);
 
       const letters = readStoredArray<{
         id: number;
@@ -118,7 +117,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
       loadTasks()
         .filter(
           (task) =>
-            task.assignedTo === user.name && task.status !== "Completed"
+            canViewTask(task, user) &&
+            task.assignedTo === user.name &&
+            task.status !== "Completed"
         )
         .slice(0, 10)
         .forEach((task) => {
