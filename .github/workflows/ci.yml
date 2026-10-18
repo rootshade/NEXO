@@ -1,0 +1,35 @@
+name: NEXO Frontend CI
+
+on:
+  push:
+    branches:
+      - frontend-dev
+      - main
+  pull_request:
+    branches:
+      - main
+      - frontend-dev
+
+jobs:
+  validate:
+    name: Lint and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build production app
+        run: npm run build
