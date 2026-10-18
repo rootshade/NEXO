@@ -274,7 +274,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </button>
 
         <div
-          className={`pointer-events-none invisible absolute right-0 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+          className={`pointer-events-none invisible absolute w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 ${
+            notificationPosition && notificationPosition.x < window.innerWidth / 2
+              ? "left-0"
+              : "right-0"
+          } ${
             notificationPosition && notificationPosition.y > window.innerHeight / 2
               ? "bottom-12 translate-y-1"
               : "top-12 -translate-y-1"
