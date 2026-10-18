@@ -7,6 +7,7 @@ import Link from "next/link";
 import { canAccess, CURRENT_USER_EVENT, getCurrentUser, permissionForPath } from "@/data/accessControl";
 
 import Sidebar from "./Sidebar";
+import Header from "../Header";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -71,6 +72,8 @@ export default function AppShell({
 
       {/* Main */}
       <div className="md:ml-64">
+        <Header onMenuClick={() => setSidebarOpen(true)} />
+
         <main className="relative min-h-screen p-4 sm:p-6">
           {hasPageAccess ? children : (
             <section className="mx-auto mt-16 max-w-lg rounded-2xl border border-rose-400/20 bg-slate-900 p-8 text-center shadow-xl">
