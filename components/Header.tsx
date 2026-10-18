@@ -24,6 +24,7 @@ type NotificationItem = {
   description: string;
   href: string;
   timeLabel: string;
+  createdAt: number;
 };
 
 const pageTitles: Record<string, string> = {
@@ -58,6 +59,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
+  const [notificationFilter, setNotificationFilter] = useState<"all" | "task" | "letter" | "message">("all");
   const [notificationPosition, setNotificationPosition] = useState<{ x: number; y: number } | null>(null);
   const notificationWrapperRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -145,6 +147,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         sender: string;
         receiver: string;
         status: string;
+        date?: string;
       }>("nexo-letters");
 
       const messages = readStoredArray<{
@@ -153,6 +156,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         sender: string;
         receiver: string;
         status: string;
+        date?: string;
       }>("nexo-messages");
 
       const nextNotifications: NotificationItem[] = [];
@@ -172,6 +176,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             description: `${letter.sender}: ${letter.subject}`,
             href: `/letters/${letter.id}`,
             timeLabel: letter.date ? `Date: ${letter.date}` : "New",
+            createdAt: letter.date && !Number.isNaN(Date.parse(letter.date)) ? Date.parse(letter.date) : Date.now(),
           });
         });
 
@@ -190,6 +195,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             description: `${message.sender}: ${message.subject}`,
             href: `/messages/${message.id}`,
             timeLabel: message.date ? `Date: ${message.date}` : "New",
+            createdAt: message.date && !Number.isNaN(Date.parse(message.date)) ? Date.parse(message.date) : Date.now(),
           });
         });
 
@@ -209,10 +215,29 @@ export default function Header({ onMenuClick }: HeaderProps) {
             description: `${task.title} · ${task.status}`,
             href: `/tasks/${task.id}`,
             timeLabel: task.createdAt ? `Created: ${new Date(task.createdAt).toLocaleDateString()}` : "Active task",
+            createdAt: task.createdAt && !Number.isNaN(Date.parse(task.createdAt)) ? Date.parse(task.createdAt) : Date.now(),
           });
         });
 
-      setNotifications(nextNotifications.filter((item) => !dismissedNotificationIds.includes(item.id)).slice(0, 20));
+      // Preserve previously discovered notifications so read items remain available in history.
+      const savedHistory = readStoredArray<NotificationItem>("nexo-notification-history");
+      const historyById = new Map<string, NotificationItem>();
+      [...savedHistory, ...nextNotifications].forEach((item) => {
+        if (!historyById.has(item.id)) historyById.set(item.id, item);
+      });
+      const mergedHistory = Array.from(historyById.values())
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .slice(0, 100);
+      try {
+        localStorage.setItem("nexo-notification-history", JSON.stringify(mergedHistory));
+      } catch {
+        // Keep notifications working if history storage is unavailable.
+      }
+      const savedDismissed = readStoredArray<string>("nexo-notification-dismissed");
+      const savedRead = readStoredArray<string>("nexo-notification-read");
+      setDismissedNotificationIds(savedDismissed);
+      setReadNotificationIds(savedRead);
+      setNotifications(mergedHistory.filter((item) => !savedDismissed.includes(item.id)));
     }
 
     syncNotifications();
@@ -269,6 +294,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }
 
   const notificationCount = notifications.filter((item) => !readNotificationIds.includes(item.id)).length;
+  const visibleNotifications = notifications.filter(
+    (item) => notificationFilter === "all" || item.type === notificationFilter
+  );
 
   const iconByType = useMemo(
     () => ({
@@ -349,19 +377,32 @@ export default function Header({ onMenuClick }: HeaderProps) {
             </div>
           </div>
 
+          <div className="flex gap-1 overflow-x-auto border-b border-slate-800 px-2 py-2">
+            {([
+              ["all", "All"],
+              ["task", "Tasks"],
+              ["letter", "Letters"],
+              ["message", "Messages"],
+            ] as const).map(([value, label]) => (
+              <button key={value} type="button" onClick={() => setNotificationFilter(value)} className={`shrink-0 rounded-lg px-3 py-1.5 text-xs transition ${notificationFilter === value ? "bg-cyan-300/15 text-cyan-200" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+
           <div className="max-h-[24rem] overflow-y-auto p-2">
-            {notifications.length === 0 ? (
+            {visibleNotifications.length === 0 ? (
               <div className="px-4 py-10 text-center">
                 <Bell className="mx-auto text-slate-600" size={28} />
                 <p className="mt-3 text-sm font-medium text-slate-300">
-                  No new notifications
+                  {notifications.length === 0 ? "No notification history yet" : "No notifications in this filter"}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  New letters, messages, and active tasks will appear here.
+                  Letters, messages, and tasks you've received will appear here.
                 </p>
               </div>
             ) : (
-              notifications.map((notification) => {
+              visibleNotifications.map((notification) => {
                 const Icon = iconByType[notification.type];
 
                 return (
