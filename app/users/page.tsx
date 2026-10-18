@@ -9,7 +9,6 @@ import {
   Mail,
   Plus,
   Search,
-  Shield,
   ShieldCheck,
   Trash2,
   UserRound,
@@ -331,7 +330,7 @@ export default function UsersPage() {
             <div className="flex items-center justify-between border-b border-slate-800 bg-gradient-to-r from-indigo-950/70 to-slate-900 px-6 py-5">
               <div>
                 <h2 className="flex items-center gap-2 text-lg font-semibold text-white"><span className="flex size-9 items-center justify-center rounded-xl bg-indigo-400/10 text-indigo-300"><UserRound size={18} /></span>{editingId ? "Edit User" : "Add User"}</h2>
-                <p className="mt-2 text-sm text-slate-400">Enter the user's basic account information.</p>
+                <p className="mt-2 text-sm text-slate-400">Enter the user&apos;s basic account information.</p>
               </div>
               <button type="button" onClick={() => setModalOpen(false)} aria-label="Close dialog" className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-800 hover:text-white"><X size={19} /></button>
             </div>
