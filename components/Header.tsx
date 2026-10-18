@@ -240,7 +240,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
   function markNotificationRead(id: string) {
     setReadNotificationIds((current) => {
       const next = current.includes(id) ? current : [...current, id];
-      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {
+        // Keep the interface usable if browser storage is unavailable.
+      }
       return next;
     });
   }
@@ -248,7 +250,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
   function markAllNotificationsRead() {
     setReadNotificationIds((current) => {
       const next = Array.from(new Set([...current, ...notifications.map((item) => item.id)]));
-      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {
+        // Keep the interface usable if browser storage is unavailable.
+      }
       return next;
     });
   }
@@ -256,7 +260,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
   function dismissNotification(id: string) {
     setDismissedNotificationIds((current) => {
       const next = current.includes(id) ? current : [...current, id];
-      try { localStorage.setItem("nexo-notification-dismissed", JSON.stringify(next)); } catch {}
+      try { localStorage.setItem("nexo-notification-dismissed", JSON.stringify(next)); } catch {
+        // Keep the interface usable if browser storage is unavailable.
+      }
       return next;
     });
     setNotifications((current) => current.filter((item) => item.id !== id));
