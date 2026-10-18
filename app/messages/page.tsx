@@ -185,10 +185,17 @@ export default function MessagesPage() {
       status: "Unread",
     };
 
-    setMessages((currentMessages) => [
-      newMessage,
-      ...currentMessages,
-    ]);
+    const updatedMessages = [newMessage, ...messages];
+
+    // Persist before broadcasting so the notification center can read the new message immediately.
+    try {
+      localStorage.setItem("nexo-messages", JSON.stringify(updatedMessages));
+    } catch {
+      // The page state still updates if browser storage is unavailable.
+    }
+
+    setMessages(updatedMessages);
+    window.dispatchEvent(new Event("nexo-messages-updated"));
 
     handleCloseModal();
   }
