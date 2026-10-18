@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Menu, Mail, MessageSquare, CheckSquare } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -55,6 +55,73 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const title = pageTitles[pathname] ?? "Page";
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationPosition, setNotificationPosition] = useState<{ x: number; y: number } | null>(null);
+  const notificationWrapperRef = useRef<HTMLDivElement>(null);
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const defaultPosition = {
+      x: Math.max(8, window.innerWidth - 56),
+      y: 72,
+    };
+
+    try {
+      const stored = localStorage.getItem("nexo-notification-position");
+      if (stored) {
+        const parsed = JSON.parse(stored) as { x?: number; y?: number };
+        if (typeof parsed.x === "number" && typeof parsed.y === "number") {
+          setNotificationPosition({
+            x: Math.min(Math.max(8, parsed.x), Math.max(8, window.innerWidth - 48)),
+            y: Math.min(Math.max(8, parsed.y), Math.max(8, window.innerHeight - 48)),
+          });
+          return;
+        }
+      }
+    } catch {
+      // Ignore invalid saved positions and use the default position.
+    }
+
+    setNotificationPosition(defaultPosition);
+  }, []);
+
+  function handleNotificationDragStart(event: React.PointerEvent<HTMLButtonElement>) {
+    if (!notificationWrapperRef.current) return;
+    const rect = notificationWrapperRef.current.getBoundingClientRect();
+    dragOffsetRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handleNotificationDrag(event: React.PointerEvent<HTMLButtonElement>) {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+
+    const x = Math.min(
+      Math.max(8, event.clientX - dragOffsetRef.current.x),
+      Math.max(8, window.innerWidth - 48)
+    );
+    const y = Math.min(
+      Math.max(8, event.clientY - dragOffsetRef.current.y),
+      Math.max(8, window.innerHeight - 48)
+    );
+
+    setNotificationPosition({ x, y });
+  }
+
+  function handleNotificationDragEnd(event: React.PointerEvent<HTMLButtonElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    if (notificationPosition) {
+      try {
+        localStorage.setItem("nexo-notification-position", JSON.stringify(notificationPosition));
+      } catch {
+        // The floating button still works if browser storage is unavailable.
+      }
+    }
+  }
 
   useEffect(() => {
     function syncNotifications() {
@@ -183,11 +250,20 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </div>
       </header>
 
-      <div className="group fixed right-4 top-[4.5rem] z-50 md:right-6">
+      <div
+        ref={notificationWrapperRef}
+        className="group fixed z-50"
+        style={notificationPosition ? { left: notificationPosition.x, top: notificationPosition.y } : undefined}
+      >
         <button
           type="button"
-          aria-label="Notifications"
-          className="relative flex size-10 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900/90 text-slate-400 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:border-cyan-400/40 hover:bg-slate-800 hover:text-cyan-200"
+          aria-label="Notifications — drag to move"
+          title="Drag to move notifications"
+          onPointerDown={handleNotificationDragStart}
+          onPointerMove={handleNotificationDrag}
+          onPointerUp={handleNotificationDragEnd}
+          onPointerCancel={handleNotificationDragEnd}
+          className="relative flex size-10 touch-none cursor-grab items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900/90 text-slate-400 shadow-lg shadow-black/20 backdrop-blur-md transition-colors duration-200 hover:border-cyan-400/40 hover:bg-slate-800 hover:text-cyan-200 active:cursor-grabbing"
         >
           <Bell size={20} />
           {notificationCount > 0 && (
