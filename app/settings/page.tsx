@@ -165,6 +165,7 @@ export default function SettingsPage() {
       "nexo-developer-profile",
       JSON.stringify(developerProfile)
     );
+    window.dispatchEvent(new Event("nexo-settings-updated"));
 
     setSaved(true);
 
