@@ -57,12 +57,43 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const title = pageTitles[pathname] ?? "Page";
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
   const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
   const [notificationFilter, setNotificationFilter] = useState<"all" | "task" | "letter" | "message">("all");
   const [notificationPosition, setNotificationPosition] = useState<{ x: number; y: number } | null>(null);
   const notificationWrapperRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    function syncNotificationPreference() {
+      try {
+        const stored = localStorage.getItem("nexo-settings");
+        if (!stored) {
+          setNotificationsEnabled(true);
+          return;
+        }
+
+        const parsed: unknown = JSON.parse(stored);
+        if (parsed && typeof parsed === "object" && "notifications" in parsed) {
+          setNotificationsEnabled((parsed as { notifications?: unknown }).notifications !== false);
+        } else {
+          setNotificationsEnabled(true);
+        }
+      } catch {
+        setNotificationsEnabled(true);
+      }
+    }
+
+    syncNotificationPreference();
+    window.addEventListener("nexo-settings-updated", syncNotificationPreference);
+    window.addEventListener("storage", syncNotificationPreference);
+
+    return () => {
+      window.removeEventListener("nexo-settings-updated", syncNotificationPreference);
+      window.removeEventListener("storage", syncNotificationPreference);
+    };
+  }, []);
 
   useEffect(() => {
     const defaultPosition = {
@@ -304,6 +335,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
     }),
     []
   );
+
+  if (!notificationsEnabled) return null;
 
   return (
     <>
