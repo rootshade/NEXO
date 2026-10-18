@@ -10,7 +10,6 @@ import {
   canViewTask,
   getCurrentUser,
   isCorrespondenceRecipient,
-  type AccessUser,
 } from "@/data/accessControl";
 import { loadTasks, TASKS_UPDATED_EVENT } from "@/data/taskStore";
 
@@ -56,7 +55,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const title = pageTitles[pathname] ?? "Page";
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     function syncNotifications() {
@@ -157,10 +155,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
     };
   }, []);
 
-  useEffect(() => {
-    setShowNotifications(false);
-  }, [pathname]);
-
   const notificationCount = notifications.length;
 
   const iconByType = useMemo(
@@ -173,91 +167,88 @@ export default function Header({ onMenuClick }: HeaderProps) {
   );
 
   return (
-    <header className="relative flex h-16 items-center justify-between border-b border-indigo-400/15 bg-slate-950/70 px-4 shadow-sm shadow-indigo-950/20 backdrop-blur-xl md:px-6">
-      <div className="flex items-center gap-3">
+    <>
+      <header className="relative flex h-16 items-center border-b border-indigo-400/15 bg-slate-950/70 px-4 shadow-sm shadow-indigo-950/20 backdrop-blur-xl md:px-6">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Open menu"
+            className="flex size-10 items-center justify-center rounded-lg text-cyan-200 transition-colors hover:bg-cyan-400/10 hover:text-cyan-100 md:hidden"
+            onClick={onMenuClick}
+          >
+            <Menu size={22} />
+          </button>
+
+          <h1 className="text-xl font-semibold text-white">{title}</h1>
+        </div>
+      </header>
+
+      <div className="group fixed right-4 top-[4.5rem] z-50 md:right-6">
         <button
           type="button"
-          aria-label="Open menu"
-          className="flex size-10 items-center justify-center rounded-lg text-cyan-200 transition-colors hover:bg-cyan-400/10 hover:text-cyan-100 md:hidden"
-          onClick={onMenuClick}
-        >
-          <Menu size={22} />
-        </button>
-
-        <h1 className="text-xl font-semibold text-white">{title}</h1>
-      </div>
-
-      <div className="relative">
-        <button
-          type="button"
-          aria-label="Open notifications"
-          aria-expanded={showNotifications}
-          onClick={() => setShowNotifications((current) => !current)}
-          className="relative flex size-10 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+          aria-label="Notifications"
+          className="relative flex size-10 items-center justify-center rounded-xl border border-slate-700/80 bg-slate-900/90 text-slate-400 shadow-lg shadow-black/20 backdrop-blur-md transition-all duration-200 hover:border-cyan-400/40 hover:bg-slate-800 hover:text-cyan-200"
         >
           <Bell size={20} />
           {notificationCount > 0 && (
-            <span className="absolute right-1 top-1 flex min-w-4 items-center justify-center rounded-full bg-cyan-300 px-1 text-[10px] font-bold leading-4 text-slate-950">
+            <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-cyan-300 px-1 text-[10px] font-bold leading-4 text-slate-950">
               {notificationCount > 99 ? "99+" : notificationCount}
             </span>
           )}
         </button>
 
-        {showNotifications && (
-          <div className="absolute right-0 top-12 z-50 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl shadow-black/40">
-            <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
-              <div>
-                <h2 className="text-sm font-semibold text-white">Notifications</h2>
-                <p className="mt-0.5 text-xs text-slate-500">
-                  {notificationCount === 0
-                    ? "You're all caught up."
-                    : `${notificationCount} item${notificationCount === 1 ? "" : "s"} need your attention.`}
+        <div className="pointer-events-none invisible absolute right-0 top-12 w-[min(24rem,calc(100vw-2rem))] translate-y-1 overflow-hidden rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl shadow-black/40 transition-all duration-200 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+          <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+            <div>
+              <h2 className="text-sm font-semibold text-white">Notifications</h2>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {notificationCount === 0
+                  ? "You're all caught up."
+                  : `${notificationCount} item${notificationCount === 1 ? "" : "s"} need your attention.`}
+              </p>
+            </div>
+            <Bell size={17} className="text-cyan-300" />
+          </div>
+
+          <div className="max-h-[24rem] overflow-y-auto p-2">
+            {notifications.length === 0 ? (
+              <div className="px-4 py-10 text-center">
+                <Bell className="mx-auto text-slate-600" size={28} />
+                <p className="mt-3 text-sm font-medium text-slate-300">
+                  No new notifications
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  New letters, messages, and active tasks will appear here.
                 </p>
               </div>
-              <Bell size={17} className="text-cyan-300" />
-            </div>
+            ) : (
+              notifications.map((notification) => {
+                const Icon = iconByType[notification.type];
 
-            <div className="max-h-[24rem] overflow-y-auto p-2">
-              {notifications.length === 0 ? (
-                <div className="px-4 py-10 text-center">
-                  <Bell className="mx-auto text-slate-600" size={28} />
-                  <p className="mt-3 text-sm font-medium text-slate-300">
-                    No new notifications
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    New letters, messages, and active tasks will appear here.
-                  </p>
-                </div>
-              ) : (
-                notifications.map((notification) => {
-                  const Icon = iconByType[notification.type];
-
-                  return (
-                    <Link
-                      key={notification.id}
-                      href={notification.href}
-                      onClick={() => setShowNotifications(false)}
-                      className="flex gap-3 rounded-xl p-3 transition-colors hover:bg-slate-800"
-                    >
-                      <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300">
-                        <Icon size={17} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-white">
-                          {notification.title}
-                        </p>
-                        <p className="mt-1 truncate text-xs text-slate-400">
-                          {notification.description}
-                        </p>
-                      </div>
-                    </Link>
-                  );
-                })
-              )}
-            </div>
+                return (
+                  <Link
+                    key={notification.id}
+                    href={notification.href}
+                    className="flex gap-3 rounded-xl p-3 transition-colors hover:bg-slate-800"
+                  >
+                    <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300">
+                      <Icon size={17} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-white">
+                        {notification.title}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-slate-400">
+                        {notification.description}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </header>
+    </>
   );
 }
