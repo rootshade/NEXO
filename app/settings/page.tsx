@@ -4,13 +4,28 @@ import { useEffect, useState } from "react";
 import {
   Bell,
   Check,
+  Code2,
+  ExternalLink,
   Eye,
   EyeOff,
+  Github,
   Lock,
   Save,
   User,
   X,
 } from "lucide-react";
+
+type DeveloperProfile = {
+  fullName: string;
+  githubUsername: string;
+  githubUrl: string;
+};
+
+const defaultDeveloperProfile: DeveloperProfile = {
+  fullName: "",
+  githubUsername: "",
+  githubUrl: "",
+};
 
 type Settings = {
   fullName: string;
@@ -31,6 +46,8 @@ export default function SettingsPage() {
     useState<Settings>(defaultSettings);
 
   const [saved, setSaved] = useState(false);
+  const [developerProfile, setDeveloperProfile] =
+    useState<DeveloperProfile>(defaultDeveloperProfile);
 
   const [showPasswordModal, setShowPasswordModal] =
     useState(false);
@@ -63,6 +80,34 @@ export default function SettingsPage() {
     const timer = window.setTimeout(() => {
       const savedSettings =
         localStorage.getItem("nexo-settings");
+
+      const savedDeveloperProfile = localStorage.getItem(
+        "nexo-developer-profile"
+      );
+
+      if (savedDeveloperProfile) {
+        try {
+          const parsedProfile: unknown = JSON.parse(savedDeveloperProfile);
+          if (
+            typeof parsedProfile === "object" &&
+            parsedProfile !== null &&
+            "fullName" in parsedProfile &&
+            "githubUsername" in parsedProfile &&
+            "githubUrl" in parsedProfile &&
+            typeof parsedProfile.fullName === "string" &&
+            typeof parsedProfile.githubUsername === "string" &&
+            typeof parsedProfile.githubUrl === "string"
+          ) {
+            setDeveloperProfile({
+              fullName: parsedProfile.fullName,
+              githubUsername: parsedProfile.githubUsername,
+              githubUrl: parsedProfile.githubUrl,
+            });
+          }
+        } catch {
+          localStorage.removeItem("nexo-developer-profile");
+        }
+      }
 
       if (!savedSettings) {
         return;
@@ -116,6 +161,10 @@ export default function SettingsPage() {
     localStorage.setItem(
       "nexo-settings",
       JSON.stringify(settings)
+    );
+    localStorage.setItem(
+      "nexo-developer-profile",
+      JSON.stringify(developerProfile)
     );
 
     setSaved(true);
@@ -290,6 +339,103 @@ export default function SettingsPage() {
               "
             />
           </div>
+        </div>
+      </section>
+
+      {/* Developer Profile */}
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-indigo-400/15 bg-indigo-400/10 p-2.5">
+              <Github size={19} className="text-indigo-300" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-white">Developer Profile</h2>
+              <p className="text-sm text-slate-500">Your personal developer details are shown only in Settings.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 px-5 py-6 md:grid-cols-2 sm:px-6">
+          <div>
+            <label htmlFor="developerFullName" className="mb-2 block text-sm font-medium text-slate-300">Full Name</label>
+            <input
+              id="developerFullName"
+              type="text"
+              autoComplete="name"
+              value={developerProfile.fullName}
+              onChange={(event) => {
+                setDeveloperProfile((current) => ({ ...current, fullName: event.target.value }));
+                setSaved(false);
+              }}
+              placeholder="Enter your name"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
+            />
+          </div>
+          <div>
+            <label htmlFor="githubUsername" className="mb-2 block text-sm font-medium text-slate-300">GitHub Username</label>
+            <input
+              id="githubUsername"
+              type="text"
+              autoComplete="off"
+              value={developerProfile.githubUsername}
+              onChange={(event) => {
+                setDeveloperProfile((current) => ({ ...current, githubUsername: event.target.value.replace(/^@/, "") }));
+                setSaved(false);
+              }}
+              placeholder="Your GitHub username"
+              className="w-full rounded-xl border border-slate-700/80 bg-slate-950 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label htmlFor="githubProfileUrl" className="mb-2 block text-sm font-medium text-slate-300">GitHub Profile Link</label>
+            <div className="relative">
+              <ExternalLink size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                id="githubProfileUrl"
+                type="url"
+                autoComplete="url"
+                value={developerProfile.githubUrl}
+                onChange={(event) => {
+                  setDeveloperProfile((current) => ({ ...current, githubUrl: event.target.value }));
+                  setSaved(false);
+                }}
+                placeholder="https://github.com/your-username"
+                className="w-full rounded-xl border border-slate-700/80 bg-slate-950 py-3 pl-11 pr-4 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/10"
+              />
+            </div>
+            {developerProfile.githubUrl.trim() && /^https:\/\/github\.com\/[A-Za-z0-9-]+\/?$/.test(developerProfile.githubUrl.trim()) && (
+              <a href={developerProfile.githubUrl.trim()} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-cyan-300 transition hover:text-cyan-200">
+                <Github size={16} /> Preview GitHub profile <ExternalLink size={14} />
+              </a>
+            )}
+            <p className="mt-2 text-xs text-slate-500">These details are saved in this browser and are not displayed elsewhere in NEXO.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* About NEXO */}
+      <section className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl shadow-black/10">
+        <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-cyan-400/15 bg-cyan-400/10 p-2.5">
+              <Code2 size={19} className="text-cyan-300" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-white">About NEXO</h2>
+              <p className="text-sm text-slate-500">Application information and source repository.</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div>
+            <p className="text-sm font-semibold text-white">NEXO Workspace</p>
+            <p className="mt-1 text-sm text-slate-400">Frontend development build</p>
+            <p className="mt-2 text-xs text-slate-500">Version: Development</p>
+          </div>
+          <a href="https://github.com/rootshade/NEXO" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white">
+            <Github size={17} /> NEXO Repository <ExternalLink size={14} />
+          </a>
         </div>
       </section>
 
