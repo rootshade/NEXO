@@ -258,7 +258,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         window.removeEventListener(eventName, syncNotifications)
       );
     };
-  }, [dismissedNotificationIds]);
+  }, []);
 
   function markNotificationRead(id: string) {
     setReadNotificationIds((current) => {
