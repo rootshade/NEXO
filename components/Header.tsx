@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Menu, Mail, MessageSquare, CheckSquare, Check, Trash2, Clock3, CheckCheck } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { Bell, Mail, MessageSquare, CheckSquare, Check, Trash2, Clock3, CheckCheck } from "lucide-react";
 
 import {
   CURRENT_USER_EVENT,
@@ -27,18 +26,6 @@ type NotificationItem = {
   createdAt: number;
 };
 
-const pageTitles: Record<string, string> = {
-  "/": "Home",
-  "/dashboard": "Dashboard",
-  "/tasks": "Tasks",
-  "/letters": "Letters",
-  "/messages": "Messages",
-  "/settings": "Settings",
-  "/users": "Users",
-  "/roles": "Roles",
-  "/permissions": "Permissions",
-};
-
 function readStoredArray<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
 
@@ -53,13 +40,10 @@ function readStoredArray<T>(key: string): T[] {
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const pathname = usePathname();
-  const title = pageTitles[pathname] ?? "Page";
-
+  void onMenuClick;
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
-  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
   const [notificationFilter, setNotificationFilter] = useState<"all" | "task" | "letter" | "message">("all");
   const [notificationPosition, setNotificationPosition] = useState<{ x: number; y: number } | null>(null);
   const notificationWrapperRef = useRef<HTMLDivElement>(null);
@@ -96,6 +80,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }, []);
 
   useEffect(() => {
+    const timer = window.setTimeout(() => {
     const defaultPosition = {
       x: Math.max(8, window.innerWidth - 56),
       y: 72,
@@ -118,6 +103,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
     }
 
     setNotificationPosition(defaultPosition);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   function handleNotificationDragStart(event: React.PointerEvent<HTMLButtonElement>) {
@@ -160,14 +147,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }
 
   useEffect(() => {
-    try {
-      const savedRead = JSON.parse(localStorage.getItem("nexo-notification-read") || "[]");
-      const savedDismissed = JSON.parse(localStorage.getItem("nexo-notification-dismissed") || "[]");
-      if (Array.isArray(savedRead)) setReadNotificationIds(savedRead.filter((id): id is string => typeof id === "string"));
-      if (Array.isArray(savedDismissed)) setDismissedNotificationIds(savedDismissed.filter((id): id is string => typeof id === "string"));
-    } catch {
-      // Ignore invalid notification preferences.
-    }
+    const timer = window.setTimeout(() => {
+      try {
+        const savedRead: unknown = JSON.parse(localStorage.getItem("nexo-notification-read") || "[]");
+        if (Array.isArray(savedRead)) setReadNotificationIds(savedRead.filter((id): id is string => typeof id === "string"));
+      } catch {
+        // Ignore invalid notification preferences.
+      }
+    }, 0);
 
     function syncNotifications() {
       const user = getCurrentUser();
@@ -265,7 +252,6 @@ export default function Header({ onMenuClick }: HeaderProps) {
         // Keep notifications working if history storage is unavailable.
       }
       const savedDismissed = readStoredArray<string>("nexo-notification-dismissed");
-      const savedRead = readStoredArray<string>("nexo-notification-read");
       setNotifications(mergedHistory.filter((item) => !savedDismissed.includes(item.id)));
     }
 
@@ -285,6 +271,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     );
 
     return () => {
+      window.clearTimeout(timer);
       events.forEach((eventName) =>
         window.removeEventListener(eventName, syncNotifications)
       );
@@ -312,13 +299,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }
 
   function dismissNotification(id: string) {
-    setDismissedNotificationIds((current) => {
-      const next = current.includes(id) ? current : [...current, id];
-      try { localStorage.setItem("nexo-notification-dismissed", JSON.stringify(next)); } catch {
-        // Keep the interface usable if browser storage is unavailable.
-      }
-      return next;
-    });
+    const current = readStoredArray<string>("nexo-notification-dismissed");
+    const next = current.includes(id) ? current : [...current, id];
+    try { localStorage.setItem("nexo-notification-dismissed", JSON.stringify(next)); } catch {
+      // Keep the interface usable if browser storage is unavailable.
+    }
     setNotifications((current) => current.filter((item) => item.id !== id));
   }
 
@@ -415,7 +400,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   {notifications.length === 0 ? "No notification history yet" : "No notifications in this filter"}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
-                  Letters, messages, and tasks you've received will appear here.
+                  Letters, messages, and tasks you&apos;ve received will appear here.
                 </p>
               </div>
             ) : (
