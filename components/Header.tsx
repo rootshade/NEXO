@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Menu, Mail, MessageSquare, CheckSquare } from "lucide-react";
+import { Bell, Menu, Mail, MessageSquare, CheckSquare, Check, Trash2, Clock3, CheckCheck } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import {
@@ -23,6 +23,7 @@ type NotificationItem = {
   title: string;
   description: string;
   href: string;
+  timeLabel: string;
 };
 
 const pageTitles: Record<string, string> = {
@@ -55,6 +56,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const title = pageTitles[pathname] ?? "Page";
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+  const [dismissedNotificationIds, setDismissedNotificationIds] = useState<string[]>([]);
   const [notificationPosition, setNotificationPosition] = useState<{ x: number; y: number } | null>(null);
   const notificationWrapperRef = useRef<HTMLDivElement>(null);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
@@ -124,6 +127,15 @@ export default function Header({ onMenuClick }: HeaderProps) {
   }
 
   useEffect(() => {
+    try {
+      const savedRead = JSON.parse(localStorage.getItem("nexo-notification-read") || "[]");
+      const savedDismissed = JSON.parse(localStorage.getItem("nexo-notification-dismissed") || "[]");
+      if (Array.isArray(savedRead)) setReadNotificationIds(savedRead.filter((id): id is string => typeof id === "string"));
+      if (Array.isArray(savedDismissed)) setDismissedNotificationIds(savedDismissed.filter((id): id is string => typeof id === "string"));
+    } catch {
+      // Ignore invalid notification preferences.
+    }
+
     function syncNotifications() {
       const user = getCurrentUser();
 
@@ -159,6 +171,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             title: "New letter",
             description: `${letter.sender}: ${letter.subject}`,
             href: `/letters/${letter.id}`,
+            timeLabel: letter.date ? `Date: ${letter.date}` : "New",
           });
         });
 
@@ -176,6 +189,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             title: "New message",
             description: `${message.sender}: ${message.subject}`,
             href: `/messages/${message.id}`,
+            timeLabel: message.date ? `Date: ${message.date}` : "New",
           });
         });
 
@@ -194,10 +208,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
             title: "Task assigned",
             description: `${task.title} · ${task.status}`,
             href: `/tasks/${task.id}`,
+            timeLabel: task.createdAt ? `Created: ${new Date(task.createdAt).toLocaleDateString()}` : "Active task",
           });
         });
 
-      setNotifications(nextNotifications.slice(0, 20));
+      setNotifications(nextNotifications.filter((item) => !dismissedNotificationIds.includes(item.id)).slice(0, 20));
     }
 
     syncNotifications();
@@ -220,9 +235,34 @@ export default function Header({ onMenuClick }: HeaderProps) {
         window.removeEventListener(eventName, syncNotifications)
       );
     };
-  }, []);
+  }, [dismissedNotificationIds]);
 
-  const notificationCount = notifications.length;
+  function markNotificationRead(id: string) {
+    setReadNotificationIds((current) => {
+      const next = current.includes(id) ? current : [...current, id];
+      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
+
+  function markAllNotificationsRead() {
+    setReadNotificationIds((current) => {
+      const next = Array.from(new Set([...current, ...notifications.map((item) => item.id)]));
+      try { localStorage.setItem("nexo-notification-read", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }
+
+  function dismissNotification(id: string) {
+    setDismissedNotificationIds((current) => {
+      const next = current.includes(id) ? current : [...current, id];
+      try { localStorage.setItem("nexo-notification-dismissed", JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setNotifications((current) => current.filter((item) => item.id !== id));
+  }
+
+  const notificationCount = notifications.filter((item) => !readNotificationIds.includes(item.id)).length;
 
   const iconByType = useMemo(
     () => ({
@@ -293,7 +333,14 @@ export default function Header({ onMenuClick }: HeaderProps) {
                   : `${notificationCount} item${notificationCount === 1 ? "" : "s"} need your attention.`}
               </p>
             </div>
-            <Bell size={17} className="text-cyan-300" />
+            <div className="flex items-center gap-2">
+              {notificationCount > 0 && (
+                <button type="button" onClick={markAllNotificationsRead} title="Mark all as read" aria-label="Mark all notifications as read" className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-cyan-300">
+                  <CheckCheck size={16} />
+                </button>
+              )}
+              <Bell size={17} className="text-cyan-300" />
+            </div>
           </div>
 
           <div className="max-h-[24rem] overflow-y-auto p-2">
@@ -312,23 +359,25 @@ export default function Header({ onMenuClick }: HeaderProps) {
                 const Icon = iconByType[notification.type];
 
                 return (
-                  <Link
-                    key={notification.id}
-                    href={notification.href}
-                    className="flex gap-3 rounded-xl p-3 transition-colors hover:bg-slate-800"
-                  >
-                    <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300">
-                      <Icon size={17} />
+                  <div key={notification.id} className={`group/item flex gap-2 rounded-xl p-3 transition-colors hover:bg-slate-800 ${readNotificationIds.includes(notification.id) ? "opacity-60" : ""}`}>
+                    <Link href={notification.href} onClick={() => markNotificationRead(notification.id)} className="flex min-w-0 flex-1 gap-3">
+                      <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-300/10 text-cyan-300">
+                        <Icon size={17} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium text-white">{notification.title}</p>
+                          {!readNotificationIds.includes(notification.id) && <span className="size-1.5 shrink-0 rounded-full bg-cyan-300" />}
+                        </div>
+                        <p className="mt-1 truncate text-xs text-slate-400">{notification.description}</p>
+                        <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-500"><Clock3 size={11} />{notification.timeLabel}</p>
+                      </div>
+                    </Link>
+                    <div className="flex shrink-0 flex-col gap-1">
+                      <button type="button" onClick={() => markNotificationRead(notification.id)} title="Mark as read" aria-label="Mark notification as read" className="rounded-md p-1.5 text-slate-500 transition hover:bg-slate-700 hover:text-cyan-300"><Check size={14} /></button>
+                      <button type="button" onClick={() => dismissNotification(notification.id)} title="Dismiss notification" aria-label="Dismiss notification" className="rounded-md p-1.5 text-slate-500 transition hover:bg-red-500/10 hover:text-red-300"><Trash2 size={14} /></button>
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-white">
-                        {notification.title}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-slate-400">
-                        {notification.description}
-                      </p>
-                    </div>
-                  </Link>
+                  </div>
                 );
               })
             )}
