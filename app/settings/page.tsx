@@ -8,7 +8,7 @@ import {
   ExternalLink,
   Eye,
   EyeOff,
-  Github,
+  GitHub,
   Lock,
   Save,
   User,
@@ -347,7 +347,7 @@ export default function SettingsPage() {
         <div className="border-b border-slate-800 bg-slate-900/80 px-5 py-5 sm:px-6">
           <div className="flex items-center gap-3">
             <div className="rounded-xl border border-indigo-400/15 bg-indigo-400/10 p-2.5">
-              <Github size={19} className="text-indigo-300" />
+              <GitHub size={19} className="text-indigo-300" />
             </div>
             <div>
               <h2 className="font-semibold text-white">Developer Profile</h2>
@@ -406,7 +406,7 @@ export default function SettingsPage() {
             </div>
             {developerProfile.githubUrl.trim() && /^https:\/\/github\.com\/[A-Za-z0-9-]+\/?$/.test(developerProfile.githubUrl.trim()) && (
               <a href={developerProfile.githubUrl.trim()} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-cyan-300 transition hover:text-cyan-200">
-                <Github size={16} /> Preview GitHub profile <ExternalLink size={14} />
+                <GitHub size={16} /> Preview GitHub profile <ExternalLink size={14} />
               </a>
             )}
             <p className="mt-2 text-xs text-slate-500">These details are saved in this browser and are not displayed elsewhere in NEXO.</p>
@@ -434,7 +434,7 @@ export default function SettingsPage() {
             <p className="mt-2 text-xs text-slate-500">Version: Development</p>
           </div>
           <a href="https://github.com/rootshade/NEXO" target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:border-cyan-400/40 hover:bg-slate-800 hover:text-white">
-            <Github size={17} /> NEXO Repository <ExternalLink size={14} />
+            <GitHub size={17} /> NEXO Repository <ExternalLink size={14} />
           </a>
         </div>
       </section>
