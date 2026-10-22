@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { canAccess, getCurrentUser } from "@/data/accessControl";
 import {
   BadgeCheck,
   Check,
@@ -98,6 +99,7 @@ function roleStyle(role: UserRole) {
 export default function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [availableRoles, setAvailableRoles] = useState<string[]>(DEFAULT_ROLE_NAMES);
+  const [canManageUsers, setCanManageUsers] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | UserStatus>("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -108,8 +110,12 @@ export default function UsersPage() {
   const [formError, setFormError] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setUsers(readUsers()); setAvailableRoles(readRoleNames()); }, 0);
-    const refresh = () => { setUsers(readUsers()); setAvailableRoles(readRoleNames()); };
+    const refresh = () => {
+      setUsers(readUsers());
+      setAvailableRoles(readRoleNames());
+      setCanManageUsers(canAccess(getCurrentUser(), "users"));
+    };
+    const timer = window.setTimeout(refresh, 0);
     window.addEventListener("storage", refresh);
     window.addEventListener(USER_EVENT, refresh);
     window.addEventListener(ROLES_EVENT, refresh);
@@ -133,6 +139,7 @@ export default function UsersPage() {
   }
 
   function openCreate() {
+    if (!canManageUsers) return;
     setEditingId(null);
     setName("");
     setEmail("");
@@ -142,6 +149,7 @@ export default function UsersPage() {
   }
 
   function openEdit(user: AppUser) {
+    if (!canManageUsers) return;
     setEditingId(user.id);
     setName(user.name);
     setEmail(user.email);
@@ -152,6 +160,10 @@ export default function UsersPage() {
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canManageUsers) {
+      setFormError("You do not have permission to manage users.");
+      return;
+    }
     setFormError("");
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
@@ -193,11 +205,13 @@ export default function UsersPage() {
   }
 
   function toggleStatus(user: AppUser) {
+    if (!canManageUsers) return;
     if (user.id === SUPER_ADMIN_ID || user.role === "Super Admin") return;
     persist(users.map((item) => item.id === user.id ? { ...item, status: item.status === "Active" ? "Inactive" : "Active" } : item));
   }
 
   function deleteUser(user: AppUser) {
+    if (!canManageUsers) return;
     if (user.id === SUPER_ADMIN_ID || user.role === "Super Admin") return;
     if (!window.confirm(`Delete ${user.name}? This cannot be undone in this browser.`)) return;
     persist(users.filter((item) => item.id !== user.id));
@@ -227,7 +241,7 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold text-white sm:text-3xl">User Management</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Manage people, assign roles, and control account status from one place.</p>
           </div>
-          <button type="button" onClick={openCreate} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200">
+          <button type="button" onClick={openCreate} disabled={!canManageUsers} title={!canManageUsers ? "You do not have permission to manage users" : "Add a user"} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
             <Plus size={18} /> Add User
           </button>
         </div>
@@ -305,9 +319,9 @@ export default function UsersPage() {
                     <td className="px-5 py-4 text-sm text-slate-400">{user.createdAt}</td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button type="button" onClick={() => openEdit(user)} aria-label={`Edit ${user.name}`} title="Edit user" className="rounded-lg border border-slate-700 p-2.5 text-slate-300 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-200"><Edit2 size={15} /></button>
-                        <button type="button" onClick={() => toggleStatus(user)} disabled={isSuperAdmin} title={isSuperAdmin ? "Super Admin cannot be deactivated" : user.status === "Active" ? "Deactivate user" : "Activate user"} className="rounded-lg border border-slate-700 p-2.5 text-slate-300 transition hover:border-violet-400/40 hover:bg-violet-400/10 hover:text-violet-200 disabled:cursor-not-allowed disabled:opacity-30"><UserX size={15} /></button>
-                        <button type="button" onClick={() => deleteUser(user)} disabled={isSuperAdmin} title={isSuperAdmin ? "Super Admin cannot be deleted" : "Delete user"} className="rounded-lg border border-rose-500/20 p-2.5 text-rose-300 transition hover:border-rose-400/50 hover:bg-rose-400/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-25"><Trash2 size={15} /></button>
+                        <button type="button" onClick={() => openEdit(user)} disabled={!canManageUsers} aria-label={`Edit ${user.name}`} title={!canManageUsers ? "No permission to manage users" : "Edit user"} className="rounded-lg border border-slate-700 p-2.5 text-slate-300 transition hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-30"><Edit2 size={15} /></button>
+                        <button type="button" onClick={() => toggleStatus(user)} disabled={!canManageUsers || isSuperAdmin} title={!canManageUsers ? "No permission to manage users" : isSuperAdmin ? "Super Admin cannot be deactivated" : user.status === "Active" ? "Deactivate user" : "Activate user"} className="rounded-lg border border-slate-700 p-2.5 text-slate-300 transition hover:border-violet-400/40 hover:bg-violet-400/10 hover:text-violet-200 disabled:cursor-not-allowed disabled:opacity-30"><UserX size={15} /></button>
+                        <button type="button" onClick={() => deleteUser(user)} disabled={!canManageUsers || isSuperAdmin} title={!canManageUsers ? "No permission to manage users" : isSuperAdmin ? "Super Admin cannot be deleted" : "Delete user"} className="rounded-lg border border-rose-500/20 p-2.5 text-rose-300 transition hover:border-rose-400/50 hover:bg-rose-400/10 hover:text-rose-200 disabled:cursor-not-allowed disabled:opacity-25"><Trash2 size={15} /></button>
                       </div>
                     </td>
                   </tr>;
