@@ -53,10 +53,11 @@ Run the available checks before pushing changes:
 
 ```bash
 npm run lint
+npm test
 npm run build
 ```
 
-GitHub Actions is configured on `frontend-dev` and `main` to install dependencies, run ESLint, and build the production app on pushes and pull requests.
+GitHub Actions is configured on `frontend-dev` and `main` to install dependencies, run ESLint, execute automated tests, and build the production app on pushes and pull requests.
 
 ## Current limitations
 
