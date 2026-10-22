@@ -1,4 +1,5 @@
 import { tasks as initialTasks } from "./tasks";
+import { isTaskList } from "./taskValidation";
 import { addTaskActivity } from "./taskActivity";
 import { canAccess, canViewTask, getCurrentUser } from "./accessControl";
 import type {
