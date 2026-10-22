@@ -2,6 +2,26 @@
 /** @typedef {"Low" | "Medium" | "High"} TaskPriority */
 
 /**
+ * Check that a string is a real calendar date in YYYY-MM-DD format.
+ * @param {unknown} value
+ * @returns {boolean}
+ */
+function isValidDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+/**
  * Validate a task object read from browser storage.
  * @param {unknown} value
  * @returns {boolean}
@@ -18,10 +38,8 @@ function isTask(value) {
     (task.status === "Pending" || task.status === "In Progress" || task.status === "Completed") &&
     (task.priority === "Low" || task.priority === "Medium" || task.priority === "High") &&
     typeof task.assignedTo === "string" &&
-    typeof task.createdAt === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(task.createdAt) &&
-    typeof task.deadline === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(task.deadline) &&
+    isValidDate(task.createdAt) &&
+    isValidDate(task.deadline) &&
     (task.createdBy === undefined || typeof task.createdBy === "string")
   );
 }
