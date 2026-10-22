@@ -48,13 +48,13 @@ export default function MessageDetailsPage({
 
   useEffect(() => {
     let cancelled = false;
-    setMessage(null);
-    setAccessDenied(false);
-    setLoading(true);
 
     async function loadMessage() {
       const { id } = await params;
       if (cancelled) return;
+      setMessage(null);
+      setAccessDenied(false);
+      setLoading(true);
 
       if (!canAccess(getCurrentUser(), "messages.view")) {
         if (!cancelled) {
