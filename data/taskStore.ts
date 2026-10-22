@@ -12,18 +12,29 @@ export const TASKS_UPDATED_EVENT = "nexo-tasks-updated";
 let taskList: Task[] = [...initialTasks];
 
 function isTask(value: unknown): value is Task {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const task = value as Partial<Task>;
   return (
     typeof task.id === "number" &&
+    Number.isSafeInteger(task.id) &&
+    task.id > 0 &&
     typeof task.title === "string" &&
     typeof task.description === "string" &&
     (task.status === "Pending" || task.status === "In Progress" || task.status === "Completed") &&
     (task.priority === "Low" || task.priority === "Medium" || task.priority === "High") &&
     typeof task.assignedTo === "string" &&
     typeof task.createdAt === "string" &&
-    typeof task.deadline === "string"
+    /^\\d{4}-\\d{2}-\\d{2}$/.test(task.createdAt) &&
+    typeof task.deadline === "string" &&
+    /^\\d{4}-\\d{2}-\\d{2}$/.test(task.deadline) &&
+    (task.createdBy === undefined || typeof task.createdBy === "string")
   );
+}
+
+function isTaskList(value: unknown): value is Task[] {
+  if (!Array.isArray(value) || !value.every(isTask)) return false;
+  const ids = value.map((task) => task.id);
+  return new Set(ids).size === ids.length;
 }
 
 function persistTasks(): void {
@@ -44,7 +55,7 @@ export function loadTasks(): Task[] {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved !== null) {
       const parsed: unknown = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.every(isTask)) {
+      if (isTaskList(parsed)) {
         // Older saved tasks predate createdBy. Attribute them to the original
         // default workspace owner so the migration does not hide existing work.
         taskList = parsed.map((task) => ({
@@ -53,7 +64,7 @@ export function loadTasks(): Task[] {
             ? task.createdBy
             : "Mohammad",
         }));
-        if (taskList.some((task, index) => task.createdBy !== (parsed[index] as Task).createdBy)) {
+        if (taskList.some((task, index) => task.createdBy !== parsed[index].createdBy)) {
           persistTasks();
         }
         return [...taskList];
