@@ -31,6 +31,16 @@ test("rejects a malformed date", () => {
   assert.equal(isTask({ ...validTask, deadline: "30-10-2026" }), false);
 });
 
+test("rejects impossible calendar dates", () => {
+  assert.equal(isTask({ ...validTask, deadline: "2026-02-30" }), false);
+  assert.equal(isTask({ ...validTask, createdAt: "2026-13-01" }), false);
+});
+
+test("accepts leap-day dates only in leap years", () => {
+  assert.equal(isTask({ ...validTask, deadline: "2024-02-29" }), true);
+  assert.equal(isTask({ ...validTask, deadline: "2025-02-29" }), false);
+});
+
 test("rejects duplicate task IDs", () => {
   assert.equal(isTaskList([validTask, { ...validTask, title: "Duplicate" }]), false);
 });
