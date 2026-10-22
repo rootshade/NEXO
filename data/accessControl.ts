@@ -90,13 +90,21 @@ export function getCurrentUser(): AccessUser {
     return users.find((user) => user.id === SUPER_ADMIN_ID) || DEFAULT_USERS[0];
   }
 
-  const id = window.localStorage.getItem(CURRENT_USER_KEY) || SUPER_ADMIN_ID;
-  return (
-    users.find((user) => user.id === id && user.status === "Active") ||
-    users.find((user) => user.id === SUPER_ADMIN_ID) ||
-    users[0] ||
-    DEFAULT_USERS[0]
-  );
+  const storedId = window.localStorage.getItem(CURRENT_USER_KEY);
+
+  // Use the selected account even when inactive so access checks can deny it.
+  // Never silently replace a disabled/deleted account with the Super Admin.
+  if (!storedId) {
+    return users.find((user) => user.id === SUPER_ADMIN_ID) || DEFAULT_USERS[0];
+  }
+
+  return users.find((user) => user.id === storedId) || {
+    id: storedId,
+    name: "Unavailable account",
+    email: "",
+    role: "User",
+    status: "Inactive",
+  };
 }
 
 /** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
@@ -137,6 +145,8 @@ export function isCorrespondenceRecipient(receiver: string, user: AccessUser): b
 }
 
 export function canAccess(user: AccessUser, permission: string): boolean {
+  // Account status must be checked before role privileges.
+  if (user.status !== "Active") return false;
   if (user.role === "Super Admin") return true;
 
   const legacyPermission = LEGACY_PERMISSION_FALLBACKS[permission];
