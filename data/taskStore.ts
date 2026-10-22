@@ -12,32 +12,6 @@ const STORAGE_KEY = "nexo_tasks";
 export const TASKS_UPDATED_EVENT = "nexo-tasks-updated";
 let taskList: Task[] = [...initialTasks];
 
-function isTask(value: unknown): value is Task {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
-  const task = value as Partial<Task>;
-  return (
-    typeof task.id === "number" &&
-    Number.isSafeInteger(task.id) &&
-    task.id > 0 &&
-    typeof task.title === "string" &&
-    typeof task.description === "string" &&
-    (task.status === "Pending" || task.status === "In Progress" || task.status === "Completed") &&
-    (task.priority === "Low" || task.priority === "Medium" || task.priority === "High") &&
-    typeof task.assignedTo === "string" &&
-    typeof task.createdAt === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(task.createdAt) &&
-    typeof task.deadline === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(task.deadline) &&
-    (task.createdBy === undefined || typeof task.createdBy === "string")
-  );
-}
-
-function isTaskList(value: unknown): value is Task[] {
-  if (!Array.isArray(value) || !value.every(isTask)) return false;
-  const ids = value.map((task) => task.id);
-  return new Set(ids).size === ids.length;
-}
-
 function persistTasks(): void {
   if (typeof window === "undefined") return;
   try {
