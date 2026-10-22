@@ -24,9 +24,9 @@ function isTask(value: unknown): value is Task {
     (task.priority === "Low" || task.priority === "Medium" || task.priority === "High") &&
     typeof task.assignedTo === "string" &&
     typeof task.createdAt === "string" &&
-    /^\\d{4}-\\d{2}-\\d{2}$/.test(task.createdAt) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(task.createdAt) &&
     typeof task.deadline === "string" &&
-    /^\\d{4}-\\d{2}-\\d{2}$/.test(task.deadline) &&
+    /^\d{4}-\d{2}-\d{2}$/.test(task.deadline) &&
     (task.createdBy === undefined || typeof task.createdBy === "string")
   );
 }
