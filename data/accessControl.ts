@@ -136,11 +136,13 @@ export function canViewCorrespondence(
   receiver: string,
   user: AccessUser
 ): boolean {
+  if (user.status !== "Active") return false;
   return matchesCorrespondenceName(sender, user.name) || matchesCorrespondenceName(receiver, user.name);
 }
 
 /** Only the addressed recipient can mark a correspondence item as read. */
 export function isCorrespondenceRecipient(receiver: string, user: AccessUser): boolean {
+  if (user.status !== "Active") return false;
   return matchesCorrespondenceName(receiver, user.name);
 }
 
