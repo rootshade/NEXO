@@ -53,11 +53,34 @@ export default function LetterDetailsPage({
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
 
+  const [accessVersion, setAccessVersion] = useState(0);
+
+  useEffect(() => {
+    const refreshAccess = () => setAccessVersion((version) => version + 1);
+    window.addEventListener("nexo-current-user-updated", refreshAccess);
+    window.addEventListener("nexo-permissions-updated", refreshAccess);
+    window.addEventListener("nexo-users-updated", refreshAccess);
+    window.addEventListener("storage", refreshAccess);
+
+    return () => {
+      window.removeEventListener("nexo-current-user-updated", refreshAccess);
+      window.removeEventListener("nexo-permissions-updated", refreshAccess);
+      window.removeEventListener("nexo-users-updated", refreshAccess);
+      window.removeEventListener("storage", refreshAccess);
+    };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: number | undefined;
+
+    setLetter(null);
+    setAccessDenied(false);
+    setLoading(true);
 
     async function loadLetter() {
       const { id } = await params;
+      if (cancelled) return;
       if (!canAccess(getCurrentUser(), "letters.view")) {
         if (!cancelled) {
           setAccessDenied(true);
@@ -128,14 +151,15 @@ export default function LetterDetailsPage({
       }
     }
 
-    window.setTimeout(() => {
+    timeoutId = window.setTimeout(() => {
       void loadLetter();
     }, 0);
 
     return () => {
       cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [params]);
+  }, [params, accessVersion]);
 
   if (loading) {
     return (
