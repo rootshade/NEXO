@@ -134,7 +134,7 @@ export function updateTask(
   }
 
   const changedFields = Object.keys(data).filter((key) => {
-    const field = key as keyof Omit<Task, "id">;
+    const field = key as keyof typeof data;
     return data[field] !== undefined && data[field] !== previousTask[field];
   });
 
