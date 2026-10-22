@@ -1,6 +1,6 @@
 import { tasks as initialTasks } from "./tasks";
 import { addTaskActivity } from "./taskActivity";
-import { canAccess, getCurrentUser } from "./accessControl";
+import { canAccess, canViewTask, getCurrentUser } from "./accessControl";
 import type {
   Task,
   TaskPriority,
@@ -131,6 +131,10 @@ export function updateTask(
   if (index === -1) return undefined;
 
   const previousTask = taskList[index];
+  if (typeof window !== "undefined" && !canViewTask(previousTask, getCurrentUser())) {
+    return undefined;
+  }
+
   const updatedTask = { ...previousTask, ...data };
   taskList[index] = updatedTask;
   persistTasks();
@@ -163,6 +167,9 @@ export function deleteTask(id: number): boolean {
   if (typeof window !== "undefined") loadTasks();
   const task = taskList.find((item) => item.id === id);
   if (!task) return false;
+  if (typeof window !== "undefined" && !canViewTask(task, getCurrentUser())) {
+    return false;
+  }
 
   addTaskActivity(id, "task_deleted", `Task deleted: ${task.title}`);
   taskList = taskList.filter((item) => item.id !== id);
