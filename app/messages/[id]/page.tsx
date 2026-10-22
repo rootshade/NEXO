@@ -29,14 +29,38 @@ export default function MessageDetailsPage({
 
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [accessVersion, setAccessVersion] = useState(0);
 
   useEffect(() => {
+    const refreshAccess = () => setAccessVersion((version) => version + 1);
+    window.addEventListener("nexo-current-user-updated", refreshAccess);
+    window.addEventListener("nexo-permissions-updated", refreshAccess);
+    window.addEventListener("nexo-users-updated", refreshAccess);
+    window.addEventListener("storage", refreshAccess);
+
+    return () => {
+      window.removeEventListener("nexo-current-user-updated", refreshAccess);
+      window.removeEventListener("nexo-permissions-updated", refreshAccess);
+      window.removeEventListener("nexo-users-updated", refreshAccess);
+      window.removeEventListener("storage", refreshAccess);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setMessage(null);
+    setAccessDenied(false);
+    setLoading(true);
+
     async function loadMessage() {
       const { id } = await params;
+      if (cancelled) return;
 
       if (!canAccess(getCurrentUser(), "messages.view")) {
-        setAccessDenied(true);
-        setLoading(false);
+        if (!cancelled) {
+          setAccessDenied(true);
+          setLoading(false);
+        }
         return;
       }
 
@@ -58,13 +82,15 @@ export default function MessageDetailsPage({
       );
 
       if (!foundMessage) {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
         return;
       }
 
       if (!canViewCorrespondence(foundMessage.sender, foundMessage.receiver, getCurrentUser())) {
-        setAccessDenied(true);
-        setLoading(false);
+        if (!cancelled) {
+          setAccessDenied(true);
+          setLoading(false);
+        }
         return;
       }
 
@@ -91,19 +117,25 @@ export default function MessageDetailsPage({
 
         window.dispatchEvent(new Event("nexo-messages-updated"));
 
-        setMessage({
-          ...foundMessage,
-          status: "Read",
-        });
-      } else {
+        if (!cancelled) {
+          setMessage({
+            ...foundMessage,
+            status: "Read",
+          });
+        }
+      } else if (!cancelled) {
         setMessage(foundMessage);
       }
 
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
 
-    loadMessage();
-  }, [params]);
+    void loadMessage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [params, accessVersion]);
 
   // Loading state
   if (loading) {
