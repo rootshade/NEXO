@@ -120,7 +120,7 @@ export function createTask(data: {
 
 export function updateTask(
   id: number,
-  data: Partial<Omit<Task, "id">>
+  data: Partial<Omit<Task, "id" | "createdBy" | "createdAt">>
 ): Task | undefined {
   if (typeof window !== "undefined" && !canAccess(getCurrentUser(), "tasks.edit")) {
     return undefined;
