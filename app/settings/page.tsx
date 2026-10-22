@@ -219,18 +219,13 @@ export default function SettingsPage() {
     }
 
     /*
-     * Password changes must be handled by the backend.
-     * Never store passwords in localStorage.
+     * NEXO has no authenticated backend yet, so it cannot verify the
+     * current password or safely persist a password change. Never claim
+     * success or store credentials in localStorage.
      */
-    setPasswordSuccess(true);
-
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-
-    setTimeout(() => {
-      closePasswordModal();
-    }, 1200);
+    setPasswordError(
+      "Password changes are unavailable until backend authentication is connected. No password was changed."
+    );
   }
 
   return (
