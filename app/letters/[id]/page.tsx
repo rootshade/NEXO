@@ -72,15 +72,13 @@ export default function LetterDetailsPage({
 
   useEffect(() => {
     let cancelled = false;
-    let timeoutId: number | undefined;
-
-    setLetter(null);
-    setAccessDenied(false);
-    setLoading(true);
 
     async function loadLetter() {
       const { id } = await params;
       if (cancelled) return;
+      setLetter(null);
+      setAccessDenied(false);
+      setLoading(true);
       if (!canAccess(getCurrentUser(), "letters.view")) {
         if (!cancelled) {
           setAccessDenied(true);
@@ -151,13 +149,13 @@ export default function LetterDetailsPage({
       }
     }
 
-    timeoutId = window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       void loadLetter();
     }, 0);
 
     return () => {
       cancelled = true;
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      window.clearTimeout(timeoutId);
     };
   }, [params, accessVersion]);
 
