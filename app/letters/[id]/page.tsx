@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import Link from "next/link";
 import {
   ArrowLeft,
   Mail,
   User,
   Calendar,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -54,6 +57,9 @@ export default function LetterDetailsPage({
   const [accessDenied, setAccessDenied] = useState(false);
 
   const [accessVersion, setAccessVersion] = useState(0);
+  const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     const refreshAccess = () => setAccessVersion((version) => version + 1);
@@ -159,6 +165,25 @@ export default function LetterDetailsPage({
     };
   }, [params, accessVersion]);
 
+  function confirmDeleteLetter() {
+    if (!letter || letter.sender !== getCurrentUser()?.name) {
+      setDeleteError("Only the sender can delete this letter.");
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(LETTERS_STORAGE_KEY);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) throw new Error("Invalid stored data");
+      const next = parsed.filter((item) => item && typeof item === "object" && "id" in item && item.id !== letter.id);
+      localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(next));
+      window.dispatchEvent(new Event("nexo-letters-updated"));
+      setShowDeleteModal(false);
+      router.push("/letters");
+    } catch {
+      setDeleteError("Could not delete this letter. Please try again.");
+    }
+  }
+
   if (loading) {
     return (
       <main className="p-6">
@@ -249,9 +274,12 @@ export default function LetterDetailsPage({
                 </h1>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+              <div className="flex flex-wrap items-center gap-3">
+                {letter.sender === getCurrentUser()?.name && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete letter</button>}
+                <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Calendar className="h-4 w-4" />
                 {letter.date}
+                </div>
               </div>
             </div>
           </div>
@@ -292,6 +320,7 @@ export default function LetterDetailsPage({
             </div>
           </div>
         </div>
+        <ConfirmDeleteModal open={showDeleteModal} title="Delete letter?" description="This letter will be permanently deleted:" itemName={letter.subject} error={deleteError} onCancel={() => { setShowDeleteModal(false); setDeleteError(""); }} onConfirm={confirmDeleteLetter} />
       </div>
     </main>
   );
