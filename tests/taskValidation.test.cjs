@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { isTask, isTaskList } = require("../data/taskValidation.js");
+const { isValidDate, isTask, isTaskList } = require("../data/taskValidation.js");
 
 const validTask = {
   id: 1,
@@ -17,6 +17,16 @@ const validTask = {
 test("accepts a valid task", () => {
   assert.equal(isTask(validTask), true);
   assert.equal(isTaskList([validTask]), true);
+});
+
+test("validates real calendar dates", () => {
+  assert.equal(isValidDate("2026-10-24"), true);
+  assert.equal(isValidDate("2026-02-30"), false);
+  assert.equal(isValidDate("2026-13-01"), false);
+  assert.equal(isValidDate("2025-02-29"), false);
+  assert.equal(isValidDate("2024-02-29"), true);
+  assert.equal(isValidDate("24-10-2026"), false);
+  assert.equal(isValidDate(null), false);
 });
 
 test("rejects a negative ID", () => {
