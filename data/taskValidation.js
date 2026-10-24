@@ -55,4 +55,4 @@ function isTaskList(value) {
   return new Set(ids).size === ids.length;
 }
 
-module.exports = { isTask, isTaskList };
+module.exports = { isValidDate, isTask, isTaskList };
