@@ -109,6 +109,7 @@ export default function UsersPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("User");
   const [formError, setFormError] = useState("");
+  const [pendingDeleteUser, setPendingDeleteUser] = useState<AppUser | null>(null);
 
   useEffect(() => {
     const refresh = () => {
