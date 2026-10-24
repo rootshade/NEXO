@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import {
   Check,
   MessageCircle,
@@ -43,6 +44,8 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   const [comments, setComments] = useState<TaskComment[]>([]);
   const [message, setMessage] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState("");
   const [editingMessage, setEditingMessage] = useState("");
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -140,17 +143,22 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
   function handleDelete(commentId: number) {
     const comment = comments.find((item) => item.id === commentId);
     if (!comment || comment.author !== CURRENT_USER) return;
+    setDeleteError("");
+    setPendingDeleteId(commentId);
+  }
 
-    const confirmed = window.confirm("Are you sure you want to delete this comment?");
-    if (!confirmed) return;
-
+  function confirmDeleteComment() {
+    if (pendingDeleteId === null) return;
+    const commentId = pendingDeleteId;
     const nextComments = comments.filter((item) => item.id !== commentId);
     try {
       saveTaskComments(nextComments);
       setComments(nextComments);
       if (editingCommentId === commentId) cancelEditing();
+      setPendingDeleteId(null);
+      setDeleteError("");
     } catch {
-      window.alert("The comment could not be deleted. Please try again.");
+      setDeleteError("The comment could not be deleted. Please try again.");
     }
   }
 
@@ -285,6 +293,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
           </button>
         </div>
       </form>
+    <ConfirmDeleteModal open={pendingDeleteId !== null} title="Delete comment?" description="Are you sure you want to delete this comment?" error={deleteError} onCancel={() => { setPendingDeleteId(null); setDeleteError(""); }} onConfirm={confirmDeleteComment} />
     </section>
   );
 }
