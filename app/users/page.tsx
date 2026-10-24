@@ -103,6 +103,7 @@ export default function UsersPage() {
   const [canManageUsers, setCanManageUsers] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | UserStatus>("All");
+  const [pendingDeleteUser, setPendingDeleteUser] = useState<AppUser | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
