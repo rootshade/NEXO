@@ -61,6 +61,8 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<TaskAttachment | null>(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const refreshAttachments = useCallback(async () => {
     setIsLoading(true);
@@ -114,16 +116,23 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
     }
   }
 
-  async function handleRemove(attachment: TaskAttachment) {
-    if (!window.confirm(`Delete "${attachment.name}" from this task?`)) return;
+  function handleRemove(attachment: TaskAttachment) {
+    setDeleteError("");
+    setPendingDelete(attachment);
+  }
 
+  async function confirmRemove() {
+    if (!pendingDelete || busyId) return;
+
+    const attachment = pendingDelete;
     setBusyId(attachment.id);
-    setError("");
+    setDeleteError("");
     try {
       await deleteTaskAttachment(attachment.id);
       setAttachments((current) => current.filter((item) => item.id !== attachment.id));
+      setPendingDelete(null);
     } catch {
-      setError("Could not delete this attachment. Please try again.");
+      setDeleteError("Could not delete this attachment. Please try again.");
     } finally {
       setBusyId(null);
     }
@@ -266,6 +275,70 @@ export default function TaskAttachments({ taskId }: TaskAttachmentsProps) {
           ))
         )}
       </div>
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !busyId) {
+              setPendingDelete(null);
+              setDeleteError("");
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-attachment-title"
+            aria-describedby="delete-attachment-description"
+            className="w-full max-w-md rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl shadow-black/40"
+          >
+            <div className="flex items-start gap-4">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-400">
+                <X size={22} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 id="delete-attachment-title" className="text-base font-semibold text-white">
+                  Confirm deletion
+                </h3>
+                <p id="delete-attachment-description" className="mt-2 text-sm leading-6 text-slate-300">
+                  Are you sure you want to remove{" "}
+                  <span className="break-words font-medium text-white">{pendingDelete.name}</span>{" "}
+                  from this task? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            {deleteError && (
+              <p role="alert" className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={Boolean(busyId)}
+                onClick={() => {
+                  setPendingDelete(null);
+                  setDeleteError("");
+                }}
+                className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-800 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(busyId)}
+                onClick={() => void confirmRemove()}
+                className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busyId ? <LoaderCircle size={16} className="animate-spin" /> : null}
+                {busyId ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
