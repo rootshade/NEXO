@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -75,6 +76,8 @@ export default function TaskDetailsClient({
   const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [editError, setEditError] = useState("");
 
   const [title, setTitle] = useState(
@@ -274,26 +277,28 @@ export default function TaskDetailsClient({
     setIsEditing(false);
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!canDeleteTask) {
-      window.alert("You do not have permission to delete tasks.");
+      setDeleteError("You do not have permission to delete tasks.");
+      setShowDeleteModal(true);
       return;
     }
+    setDeleteError("");
+    setShowDeleteModal(true);
+  }
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this task? Its comments and attachments will also be removed."
-    );
-
-    if (!confirmed) {
+  async function confirmDeleteTask() {
+    if (!canDeleteTask) {
+      setDeleteError("You do not have permission to delete tasks.");
       return;
     }
-
     const deleted = deleteTask(id);
-
     if (deleted) {
       await cleanupTaskData(id);
       router.push("/tasks");
+      return;
     }
+    setDeleteError("The task could not be deleted. Please try again.");
   }
 
   return (
@@ -752,6 +757,7 @@ export default function TaskDetailsClient({
       <TaskAttachments taskId={task.id} />
       <TaskActivityLog taskId={task.id} />
       <TaskComments taskId={task.id} />
+      <ConfirmDeleteModal open={showDeleteModal} title="Delete task?" description="This will permanently delete this task and its comments and attachments." error={deleteError} onCancel={() => { setShowDeleteModal(false); setDeleteError(""); }} onConfirm={() => void confirmDeleteTask()} />
     </div>
   );
 }
