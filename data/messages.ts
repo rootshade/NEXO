@@ -1,5 +1,7 @@
 export type MessageStatus = "Unread" | "Read";
 
+export type MessageAttachment = { id: string; name: string; type: string; size: number; dataUrl: string; };
+
 export type Message = {
   id: number;
   sender: string;
@@ -8,6 +10,7 @@ export type Message = {
   content: string;
   date: string;
   status: MessageStatus;
+  attachments?: MessageAttachment[];
 };
 
 export const initialMessages: Message[] = [
