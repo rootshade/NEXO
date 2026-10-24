@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import Link from "next/link";
 import {
   ArrowLeft,
   Calendar,
   Mail,
   User,
+  Trash2,
 } from "lucide-react";
 
 import {
@@ -30,6 +33,9 @@ export default function MessageDetailsPage({
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
   const [accessVersion, setAccessVersion] = useState(0);
+  const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     const refreshAccess = () => setAccessVersion((version) => version + 1);
@@ -136,6 +142,25 @@ export default function MessageDetailsPage({
       cancelled = true;
     };
   }, [params, accessVersion]);
+
+  function confirmDeleteMessage() {
+    if (!message || message.sender !== getCurrentUser()?.name) {
+      setDeleteError("Only the sender can delete this message.");
+      return;
+    }
+    try {
+      const raw = localStorage.getItem("nexo-messages");
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) throw new Error("Invalid stored data");
+      const next = parsed.filter((item) => item && typeof item === "object" && "id" in item && item.id !== message.id);
+      localStorage.setItem("nexo-messages", JSON.stringify(next));
+      window.dispatchEvent(new Event("nexo-messages-updated"));
+      setShowDeleteModal(false);
+      router.push("/messages");
+    } catch {
+      setDeleteError("Could not delete this message. Please try again.");
+    }
+  }
 
   // Loading state
   if (loading) {
@@ -266,6 +291,8 @@ export default function MessageDetailsPage({
               </h1>
             </div>
 
+            {message.sender === getCurrentUser()?.name && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete message</button>}
+
             {/* Date */}
             <div
               className="
@@ -372,6 +399,7 @@ export default function MessageDetailsPage({
             </p>
           </div>
         </div>
+        <ConfirmDeleteModal open={showDeleteModal} title="Delete message?" description="This message will be permanently deleted:" itemName={message.subject} error={deleteError} onCancel={() => { setShowDeleteModal(false); setDeleteError(""); }} onConfirm={confirmDeleteMessage} />
       </div>
     </div>
   );
