@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import CorrespondenceEditor, { type CorrespondenceAttachment } from "@/components/correspondence/CorrespondenceEditor";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -184,6 +185,22 @@ export default function LetterDetailsPage({
     }
   }
 
+  function saveLetterContent(content: string, attachments: CorrespondenceAttachment[]) {
+    const userName = getCurrentUser()?.name;
+    if (!letter || !userName || (userName !== letter.sender && userName !== letter.receiver)) {
+      throw new Error("Only the sender or recipient can edit this letter.");
+    }
+    const raw = localStorage.getItem(LETTERS_STORAGE_KEY);
+    const stored: unknown = raw ? JSON.parse(raw) : initialLetters;
+    if (!Array.isArray(stored)) throw new Error("Invalid letter data.");
+    const updated = stored.map((item) => item && typeof item === "object" && "id" in item && item.id === letter.id
+      ? { ...item, content, attachments }
+      : item);
+    localStorage.setItem(LETTERS_STORAGE_KEY, JSON.stringify(updated));
+    setLetter({ ...letter, content, attachments });
+    window.dispatchEvent(new Event("nexo-letters-updated"));
+  }
+
   if (loading) {
     return (
       <main className="p-6">
@@ -309,15 +326,12 @@ export default function LetterDetailsPage({
           </div>
 
           <div className="p-5 sm:p-7">
-            <div className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">
-              Letter Content
-            </div>
-
-            <div className="rounded-xl border border-slate-800 bg-slate-950/50 p-5">
-              <p className="whitespace-pre-wrap text-sm leading-7 text-slate-300">
-                {letter.content}
-              </p>
-            </div>
+            <CorrespondenceEditor
+              kind="Letter"
+              content={letter.content}
+              attachments={letter.attachments as CorrespondenceAttachment[] | undefined}
+              onSave={saveLetterContent}
+            />
           </div>
         </div>
         <ConfirmDeleteModal open={showDeleteModal} title="Delete letter?" description="This letter will be permanently deleted:" itemName={letter.subject} error={deleteError} onCancel={() => { setShowDeleteModal(false); setDeleteError(""); }} onConfirm={confirmDeleteLetter} />
