@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import CorrespondenceEditor, { type CorrespondenceAttachment } from "@/components/correspondence/CorrespondenceEditor";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -160,6 +161,23 @@ export default function MessageDetailsPage({
     } catch {
       setDeleteError("Could not delete this message. Please try again.");
     }
+  }
+
+  function saveMessageContent(content: string, attachments: CorrespondenceAttachment[]) {
+    const userName = getCurrentUser()?.name;
+    if (!message || !userName || (userName !== message.sender && userName !== message.receiver)) {
+      throw new Error("Only the sender or recipient can edit this message.");
+    }
+    const raw = localStorage.getItem("nexo-messages");
+    const stored: unknown = raw ? JSON.parse(raw) : initialMessages;
+    if (!Array.isArray(stored)) throw new Error("Invalid message data.");
+    const updated = stored.map((item) => item && typeof item === "object" && "id" in item && item.id === message.id
+      ? { ...item, content, attachments }
+      : item);
+    localStorage.setItem("nexo-messages", JSON.stringify(updated));
+    const updatedMessage = { ...message, content, attachments };
+    setMessage(updatedMessage);
+    window.dispatchEvent(new Event("nexo-messages-updated"));
   }
 
   // Loading state
@@ -373,31 +391,13 @@ export default function MessageDetailsPage({
           </div>
         </div>
 
-        {/* Content */}
-        <div className="px-6 py-6">
-          <div className="mb-3 flex items-center gap-2">
-            <Mail
-              size={17}
-              className="text-slate-500"
-            />
-
-            <h2 className="text-sm font-semibold text-slate-300">
-              Message
-            </h2>
-          </div>
-
-          <div
-            className="
-              rounded-xl
-              border border-slate-800
-              bg-slate-950
-              p-5
-            "
-          >
-            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-300">
-              {message.content}
-            </p>
-          </div>
+        <div className="p-5 sm:p-6">
+          <CorrespondenceEditor
+            kind="Message"
+            content={message.content}
+            attachments={message.attachments as CorrespondenceAttachment[] | undefined}
+            onSave={saveMessageContent}
+          />
         </div>
         <ConfirmDeleteModal open={showDeleteModal} title="Delete message?" description="This message will be permanently deleted:" itemName={message.subject} error={deleteError} onCancel={() => { setShowDeleteModal(false); setDeleteError(""); }} onConfirm={confirmDeleteMessage} />
       </div>
