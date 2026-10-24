@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import { canAccess, getCurrentUser } from "@/data/accessControl";
 import {
   BadgeCheck,
@@ -213,8 +214,13 @@ export default function UsersPage() {
   function deleteUser(user: AppUser) {
     if (!canManageUsers) return;
     if (user.id === SUPER_ADMIN_ID || user.role === "Super Admin") return;
-    if (!window.confirm(`Delete ${user.name}? This cannot be undone in this browser.`)) return;
-    persist(users.filter((item) => item.id !== user.id));
+    setPendingDeleteUser(user);
+  }
+
+  function confirmDeleteUser() {
+    if (!pendingDeleteUser) return;
+    persist(users.filter((item) => item.id !== pendingDeleteUser.id));
+    setPendingDeleteUser(null);
   }
 
   const filteredUsers = useMemo(() => {
@@ -377,6 +383,7 @@ export default function UsersPage() {
         </div>
       )}
       <p className="flex items-start gap-2 rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3 text-xs leading-5 text-slate-400"><ShieldCheck size={15} className="mt-0.5 shrink-0 text-amber-300" /> Prototype only: data is stored in this browser. The Super Admin protection here is UI-side only; backend authorization must enforce the same rule before production.</p>
-    </div>
+      <ConfirmDeleteModal open={pendingDeleteUser !== null} title="Delete user?" description="This cannot be undone in this browser. User:" itemName={pendingDeleteUser?.name} onCancel={() => setPendingDeleteUser(null)} onConfirm={confirmDeleteUser} />
+  </div>
   );
 }
