@@ -27,6 +27,7 @@ import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 import TaskAttachments from "@/components/tasks/TaskAttachments";
 import { cleanupTaskData } from "@/data/taskCleanup";
 import { canAccess, canViewTask, getCurrentUser } from "@/data/accessControl";
+import { isValidDate } from "@/data/taskValidation";
 
 type TaskDetailsClientProps = {
   id: number;
@@ -250,8 +251,7 @@ export default function TaskDetailsClient({
       return;
     }
 
-    const selectedDate = new Date(`${deadline}T00:00:00`);
-    if (Number.isNaN(selectedDate.getTime())) {
+    if (!isValidDate(deadline)) {
       setEditError("Please select a valid deadline.");
       return;
     }
