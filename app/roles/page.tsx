@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import { BadgeCheck, Crown, Edit2, Plus, Shield, ShieldCheck, Trash2, UsersRound, X } from "lucide-react";
 
 type Role = { id: string; name: string; description: string; members: number; protected?: boolean };
@@ -60,6 +61,7 @@ export default function RolesPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [error, setError] = useState("");
+  const [pendingDeleteRole, setPendingDeleteRole] = useState<Role | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -147,7 +149,12 @@ export default function RolesPage() {
   function remove(role: Role) {
     if (role.protected) return;
     if (role.members > 0) { setError(`Reassign the ${role.members} user(s) using "${role.name}" before deleting this role.`); return; }
-    if (!window.confirm(`Delete the "${role.name}" role?`)) return;
+    setPendingDeleteRole(role);
+  }
+
+  function confirmDeleteRole() {
+    if (!pendingDeleteRole) return;
+    const role = pendingDeleteRole;
     persist(roles.filter((item) => item.id !== role.id));
     try {
       const raw = window.localStorage.getItem(PERMISSIONS_KEY);
@@ -159,8 +166,9 @@ export default function RolesPage() {
         window.dispatchEvent(new CustomEvent(PERMISSIONS_EVENT));
       }
     } catch {
-      // Ignore invalid optional permission data.
+      // Permission cleanup is best-effort for malformed optional data.
     }
+    setPendingDeleteRole(null);
   }
 
   return <div className="space-y-6">
@@ -203,5 +211,6 @@ export default function RolesPage() {
         <div className="flex justify-end gap-3 border-t border-slate-800 px-6 py-5"><button type="button" onClick={() => setModalOpen(false)} className="rounded-xl border border-slate-700 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-800">Cancel</button><button type="submit" disabled={!!(editingId && roles.find((role) => role.id === editingId)?.protected)} className="rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">{editingId ? "Save Changes" : "Create Role"}</button></div>
       </form>
     </div>}
+    <ConfirmDeleteModal open={pendingDeleteRole !== null} title="Delete role?" description="Delete this role:" itemName={pendingDeleteRole?.name} onCancel={() => setPendingDeleteRole(null)} onConfirm={confirmDeleteRole} />
   </div>;
 }
