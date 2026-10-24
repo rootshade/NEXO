@@ -3,6 +3,8 @@ export type LetterStatus =
   | "Read"
   | "Sent";
 
+export type LetterAttachment = { id: string; name: string; type: string; size: number; dataUrl: string; };
+
 export type Letter = {
   id: number;
   subject: string;
@@ -11,6 +13,7 @@ export type Letter = {
   date: string;
   status: LetterStatus;
   content: string;
+  attachments?: LetterAttachment[];
 };
 
 export const initialLetters: Letter[] = [
