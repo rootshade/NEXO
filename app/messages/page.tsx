@@ -260,7 +260,7 @@ export default function MessagesPage() {
       {/* Message statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
-          { label: "Total Messages", value: currentUser ? messages.filter((message) => canViewCorrespondence(message.sender, message.receiver, currentUser)).length : 0, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
+          { label: "Total Messages", value: currentUser ? messages.filter((message) => canViewCorrespondenceRecord(message, currentUser)).length : 0, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
           { label: "Unread Messages", value: currentUser ? messages.filter((message) => isCorrespondenceRecipientRecord(message, currentUser) && message.status === "Unread").length : 0, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
           { label: "Read Messages", value: currentUser ? messages.filter((message) => isCorrespondenceRecipientRecord(message, currentUser) && message.status === "Read").length : 0, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
           { label: "Sent by Me", value: currentUser ? messages.filter((message) => isCorrespondenceSenderRecord(message, currentUser)).length : 0, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
