@@ -13,6 +13,12 @@ import {
   User,
   X,
 } from "lucide-react";
+import {
+  isDeveloperProfile,
+  isSettings,
+  readValidatedJSON,
+  writeValidatedJSON,
+} from "@/data/settingsStorage.cjs";
 
 type DeveloperProfile = {
   fullName: string;
@@ -45,6 +51,8 @@ export default function SettingsPage() {
     useState<Settings>(defaultSettings);
 
   const [saved, setSaved] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageError, setStorageError] = useState("");
   const [developerProfile, setDeveloperProfile] =
     useState<DeveloperProfile>(defaultDeveloperProfile);
 
@@ -77,67 +85,36 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const savedSettings =
-        localStorage.getItem("nexo-settings");
-
-      const savedDeveloperProfile = localStorage.getItem(
-        "nexo-developer-profile"
-      );
-
-      if (savedDeveloperProfile) {
-        try {
-          const parsedProfile: unknown = JSON.parse(savedDeveloperProfile);
-          if (
-            typeof parsedProfile === "object" &&
-            parsedProfile !== null &&
-            "fullName" in parsedProfile &&
-            "githubUsername" in parsedProfile &&
-            "githubUrl" in parsedProfile &&
-            typeof parsedProfile.fullName === "string" &&
-            typeof parsedProfile.githubUsername === "string" &&
-            typeof parsedProfile.githubUrl === "string"
-          ) {
-            setDeveloperProfile({
-              fullName: parsedProfile.fullName,
-              githubUsername: parsedProfile.githubUsername,
-              githubUrl: parsedProfile.githubUrl,
-            });
-          }
-        } catch {
-          localStorage.removeItem("nexo-developer-profile");
-        }
-      }
-
-      if (!savedSettings) {
-        return;
-      }
-
       try {
-        const parsed: unknown = JSON.parse(savedSettings);
+        const storage = window.localStorage;
+        const settingsResult = readValidatedJSON(storage, "nexo-settings", isSettings);
+        const profileResult = readValidatedJSON(
+          storage,
+          "nexo-developer-profile",
+          isDeveloperProfile
+        );
 
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          "fullName" in parsed &&
-          "email" in parsed &&
-          "language" in parsed &&
-          "notifications" in parsed &&
-          typeof parsed.fullName === "string" &&
-          typeof parsed.email === "string" &&
-          typeof parsed.language === "string" &&
-          typeof parsed.notifications === "boolean"
-        ) {
-          setSettings({
-            fullName: parsed.fullName,
-            email: parsed.email,
-            language: parsed.language,
-            notifications: parsed.notifications,
-          });
+        if (settingsResult.ok && settingsResult.found) {
+          setSettings(settingsResult.value as Settings);
+        }
+        if (profileResult.ok && profileResult.found) {
+          setDeveloperProfile(profileResult.value as DeveloperProfile);
+        }
+
+        if (settingsResult.ok && profileResult.ok) {
+          setStorageReady(true);
+          setStorageError("");
         } else {
-          localStorage.removeItem("nexo-settings");
+          setStorageReady(false);
+          setStorageError(
+            "Saved settings could not be read safely. Existing browser data was left unchanged; saving is paused to prevent data loss."
+          );
         }
       } catch {
-        localStorage.removeItem("nexo-settings");
+        setStorageReady(false);
+        setStorageError(
+          "Browser storage is unavailable. Settings cannot be loaded or saved right now."
+        );
       }
     }, 0);
 
@@ -157,21 +134,54 @@ export default function SettingsPage() {
   }
 
   function handleSave() {
-    localStorage.setItem(
-      "nexo-settings",
-      JSON.stringify(settings)
-    );
-    localStorage.setItem(
-      "nexo-developer-profile",
-      JSON.stringify(developerProfile)
-    );
-    window.dispatchEvent(new Event("nexo-settings-updated"));
-
-    setSaved(true);
-
-    setTimeout(() => {
+    if (!storageReady) {
+      setStorageError(
+        "Saving is paused because existing settings could not be read safely."
+      );
       setSaved(false);
-    }, 2500);
+      return;
+    }
+
+    try {
+      const storage = window.localStorage;
+      const settingsResult = writeValidatedJSON(
+        storage,
+        "nexo-settings",
+        settings,
+        isSettings
+      );
+      if (!settingsResult.ok) {
+        setStorageError(
+          "Settings could not be saved. Check browser storage availability and try again."
+        );
+        setSaved(false);
+        return;
+      }
+
+      const profileResult = writeValidatedJSON(
+        storage,
+        "nexo-developer-profile",
+        developerProfile,
+        isDeveloperProfile
+      );
+      if (!profileResult.ok) {
+        setStorageError(
+          "Your basic settings were saved, but the developer profile could not be saved. Please try again."
+        );
+        setSaved(false);
+        return;
+      }
+
+      setStorageError("");
+      window.dispatchEvent(new Event("nexo-settings-updated"));
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 2500);
+    } catch {
+      setStorageError(
+        "Browser storage is unavailable. Your changes may not have been saved."
+      );
+      setSaved(false);
+    }
   }
 
   function openPasswordModal() {
@@ -611,6 +621,14 @@ export default function SettingsPage() {
       </section>
 
       {/* Save */}
+      {storageError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200"
+        >
+          {storageError}
+        </div>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
         {saved && (
           <div className="flex items-center gap-2 text-sm text-slate-400">
@@ -622,7 +640,8 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSave}
-          className="
+          disabled={!storageReady}
+          className="disabled:cursor-not-allowed disabled:opacity-50 
             inline-flex
             items-center
             justify-center
