@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
 import { canAccess, getCurrentUser } from "@/data/accessControl";
+import { readUsers as readStoredUsers, writeUsers } from "@/data/userStorage.cjs";
 import {
   BadgeCheck,
   Check,
@@ -55,29 +56,11 @@ function readRoleNames(): string[] {
   }
 }
 
-function readUsers(): AppUser[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : DEFAULT_USERS;
-    if (!Array.isArray(parsed)) return DEFAULT_USERS;
-    const valid = parsed.filter((item): item is AppUser =>
-      !!item &&
-      typeof item === "object" &&
-      typeof item.id === "string" &&
-      typeof item.name === "string" &&
-      typeof item.email === "string" &&
-      typeof item.role === "string" && item.role.trim().length > 0 &&
-      (item.status === "Active" || item.status === "Inactive") &&
-      typeof item.createdAt === "string"
-    );
-    // Keep the prototype's root account protected even if old browser data is incomplete.
-    if (!valid.some((user) => user.id === SUPER_ADMIN_ID && user.role === "Super Admin")) {
-      valid.unshift(DEFAULT_USERS[0]);
-    }
-    return valid;
-  } catch {
-    return DEFAULT_USERS;
+function ensureSuperAdmin(users: AppUser[]): AppUser[] {
+  if (users.some((user) => user.id === SUPER_ADMIN_ID && user.role === "Super Admin")) {
+    return users;
   }
+  return [DEFAULT_USERS[0], ...users];
 }
 
 function initials(name: string) {
@@ -101,6 +84,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [availableRoles, setAvailableRoles] = useState<string[]>(DEFAULT_ROLE_NAMES);
   const [canManageUsers, setCanManageUsers] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageError, setStorageError] = useState("");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | UserStatus>("All");
   const [modalOpen, setModalOpen] = useState(false);
@@ -113,7 +98,16 @@ export default function UsersPage() {
 
   useEffect(() => {
     const refresh = () => {
-      setUsers(readUsers());
+      const result = readStoredUsers(window.localStorage, STORAGE_KEY, DEFAULT_USERS);
+      if (result.ok) {
+        setUsers(ensureSuperAdmin(result.value));
+        setStorageReady(true);
+        setStorageError("");
+      } else {
+        setUsers(DEFAULT_USERS);
+        setStorageReady(false);
+        setStorageError("Saved user data could not be read safely. Editing is paused to protect the existing data.");
+      }
       setAvailableRoles(readRoleNames());
       setCanManageUsers(canAccess(getCurrentUser(), "users"));
     };
@@ -130,14 +124,20 @@ export default function UsersPage() {
   }, []);
 
   function persist(nextUsers: AppUser[]) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUsers));
-      setUsers(nextUsers);
-      window.dispatchEvent(new CustomEvent(USER_EVENT));
-      setFormError("");
-    } catch {
-      setFormError("Unable to save users in this browser. Check available storage.");
+    if (!storageReady) {
+      setFormError("User storage is not ready. Refresh the page and try again.");
+      return;
     }
+    const result = writeUsers(window.localStorage, STORAGE_KEY, nextUsers);
+    if (!result.ok) {
+      setFormError(result.reason === "invalid_data"
+        ? "The user list failed validation and was not saved."
+        : "Unable to save users in this browser. Check available storage.");
+      return;
+    }
+    setUsers(nextUsers);
+    window.dispatchEvent(new CustomEvent(USER_EVENT));
+    setFormError("");
   }
 
   function openCreate() {
@@ -248,7 +248,7 @@ export default function UsersPage() {
             <h1 className="text-2xl font-bold text-white sm:text-3xl">User Management</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">Manage people, assign roles, and control account status from one place.</p>
           </div>
-          <button type="button" onClick={openCreate} disabled={!canManageUsers} title={!canManageUsers ? "You do not have permission to manage users" : "Add a user"} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
+          <button type="button" onClick={openCreate} disabled={!canManageUsers || !storageReady} title={!canManageUsers ? "You do not have permission to manage users" : !storageReady ? "User storage is unavailable" : "Add a user"} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-300 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40">
             <Plus size={18} /> Add User
           </button>
         </div>
