@@ -102,6 +102,7 @@ export default function LettersPage() {
 
       if (result.ok && result.found && Array.isArray(result.value)) {
         setLetters(result.value as Letter[]);
+        setCanPersistLetters(true);
         setStorageError("");
       } else if (!result.ok) {
         setCanPersistLetters(false);
