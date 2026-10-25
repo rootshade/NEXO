@@ -1,6 +1,7 @@
 import { tasks as initialTasks } from "./tasks";
 import { isTaskList } from "./taskValidation";
 import { migrateLegacyTaskIdentity } from "./taskMigration.cjs";
+import { readJSON, writeJSON } from "./safeStorage.cjs";
 import { addTaskActivity } from "./taskActivity";
 import { canAccess, canViewTask, getCurrentUser, getUsers } from "./accessControl";
 import type {
@@ -13,46 +14,51 @@ const STORAGE_KEY = "nexo_tasks";
 export const TASKS_UPDATED_EVENT = "nexo-tasks-updated";
 let taskList: Task[] = [...initialTasks];
 
-function persistTasks(): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(taskList));
-    window.dispatchEvent(new CustomEvent(TASKS_UPDATED_EVENT));
-  } catch (error) {
-    console.error("Unable to save NEXO tasks:", error);
+function persistTasks(): boolean {
+  if (typeof window === "undefined") return true;
+
+  const result = writeJSON(window.localStorage, STORAGE_KEY, taskList);
+  if (!result.ok) {
+    console.error("Unable to save NEXO tasks:", result.reason);
+    return false;
   }
+
+  window.dispatchEvent(new CustomEvent(TASKS_UPDATED_EVENT));
+  return true;
 }
 
 /** Load saved tasks once the app is running in the browser. */
 export function loadTasks(): Task[] {
-  if (typeof window === "undefined") return taskList;
+  if (typeof window === "undefined") return [...taskList];
 
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved !== null) {
-      const parsed: unknown = JSON.parse(saved);
-      if (isTaskList(parsed)) {
-        // Migrate legacy names to stable IDs only when the name uniquely
-        // identifies one account. Ambiguous names remain legacy records.
-        taskList = parsed.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
-        if (taskList.some((task, index) =>
-          task.createdBy !== parsed[index].createdBy ||
-          task.createdById !== parsed[index].createdById ||
-          task.assignedToId !== parsed[index].assignedToId
-        )) {
-          persistTasks();
-        }
-        return [...taskList];
-      }
-      console.warn("Saved NEXO tasks had an invalid format; using defaults.");
-    }
-    taskList = initialTasks.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
-    persistTasks();
-  } catch (error) {
-    console.error("Unable to load NEXO tasks:", error);
-    taskList = [...initialTasks];
+  const result = readJSON(window.localStorage, STORAGE_KEY);
+  if (!result.ok) {
+    console.error("Unable to read saved NEXO tasks:", result.reason);
+    return [...taskList];
   }
 
+  if (result.found) {
+    if (!isTaskList(result.value)) {
+      // Keep the original stored value intact for recovery; use safe defaults
+      // in memory instead of overwriting potentially recoverable user data.
+      console.warn("Saved NEXO tasks had an invalid format; using defaults.");
+      taskList = initialTasks.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
+      return [...taskList];
+    }
+
+    const savedTasks = result.value;
+    taskList = savedTasks.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
+    const identityChanged = taskList.some((task, index) =>
+      task.createdBy !== savedTasks[index].createdBy ||
+      task.createdById !== savedTasks[index].createdById ||
+      task.assignedToId !== savedTasks[index].assignedToId
+    );
+    if (identityChanged) persistTasks();
+    return [...taskList];
+  }
+
+  taskList = initialTasks.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
+  persistTasks();
   return [...taskList];
 }
 
@@ -84,6 +90,7 @@ export function createTask(data: {
   // cannot overwrite tasks saved by a previous page render.
   if (typeof window !== "undefined") loadTasks();
 
+  const previousTasks = taskList;
   const newId =
     taskList.length > 0
       ? Math.max(...taskList.map((task) => task.id)) + 1
@@ -104,9 +111,12 @@ export function createTask(data: {
   };
 
   taskList = [newTask, ...taskList];
-  persistTasks();
-  addTaskActivity(newTask.id, "task_created", `Task created: ${newTask.title}`);
+  if (!persistTasks()) {
+    taskList = previousTasks;
+    return undefined;
+  }
 
+  addTaskActivity(newTask.id, "task_created", `Task created: ${newTask.title}`);
   return newTask;
 }
 
@@ -129,7 +139,10 @@ export function updateTask(
 
   const updatedTask = { ...previousTask, ...data };
   taskList[index] = updatedTask;
-  persistTasks();
+  if (!persistTasks()) {
+    taskList[index] = previousTask;
+    return undefined;
+  }
 
   if (data.status && data.status !== previousTask.status) {
     addTaskActivity(
@@ -163,9 +176,14 @@ export function deleteTask(id: number): boolean {
     return false;
   }
 
-  addTaskActivity(id, "task_deleted", `Task deleted: ${task.title}`);
+  const previousTasks = taskList;
   taskList = taskList.filter((item) => item.id !== id);
-  persistTasks();
+  if (!persistTasks()) {
+    taskList = previousTasks;
+    return false;
+  }
+
+  addTaskActivity(id, "task_deleted", `Task deleted: ${task.title}`);
   return true;
 }
 
