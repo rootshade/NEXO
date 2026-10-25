@@ -9,4 +9,21 @@ function isTaskAssignedTo(task, user) {
   return task.assignedToId === user.id;
 }
 
-module.exports = { isTaskAssignedTo };
+/**
+ * Resolve an account only when its stable ID matches and the account is active.
+ * Names are deliberately not accepted as identifiers.
+ */
+function findActiveAssignee(users, assignedToId) {
+  if (!Array.isArray(users) || typeof assignedToId !== "string" || !assignedToId) {
+    return undefined;
+  }
+  return users.find((user) =>
+    user &&
+    user.id === assignedToId &&
+    user.status === "Active" &&
+    typeof user.name === "string" &&
+    user.name.trim().length > 0
+  );
+}
+
+module.exports = { isTaskAssignedTo, findActiveAssignee };
