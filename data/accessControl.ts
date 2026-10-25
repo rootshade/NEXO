@@ -68,7 +68,7 @@ export function getCurrentUser(): AccessUser {
 
 /** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
 export function canViewTask(
-  task: { assignedTo: string; createdBy?: string },
+  task: { assignedTo: string; createdBy?: string; createdById?: string },
   user: AccessUser
 ): boolean {
   if (!canAccess(user, "tasks.view")) return false;
