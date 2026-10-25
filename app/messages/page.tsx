@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
-import { canAccess, canViewCorrespondence, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialMessages,
