@@ -42,3 +42,7 @@ test("fills missing creator label with the legacy workspace owner name", () => {
   assert.equal(migrated.createdBy, "Mohammad");
   assert.equal(migrated.createdById, "user-mohammad");
 });
+
+test("normalizes legacy display names before matching", () => {
+  assert.equal(findUniqueUserByName("  aLI ", users)?.id, "user-ali");
+});
