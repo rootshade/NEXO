@@ -95,6 +95,7 @@ export default function MessagesPage() {
           setMessages(result.value as Message[]);
           setStorageError("");
         } else if (!result.ok) {
+          setCanPersistMessages(false);
           setStorageError("Saved messages could not be read safely. The stored data has been left unchanged.");
         }
       }, 0);
@@ -157,6 +158,10 @@ export default function MessagesPage() {
   function handleSendMessage() {
     if (!canAccess(getCurrentUser(), "messages.create")) {
       setCanCreateMessages(false);
+      return;
+    }
+    if (!canPersistMessages) {
+      setStorageError("Sending is paused because existing message data could not be read safely.");
       return;
     }
     const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
