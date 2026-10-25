@@ -1,5 +1,6 @@
 import { tasks as initialTasks } from "./tasks";
 import { isTaskList } from "./taskValidation";
+import { migrateLegacyTaskIdentity } from "./taskMigration.cjs";
 import { addTaskActivity } from "./taskActivity";
 import { canAccess, canViewTask, getCurrentUser, getUsers } from "./accessControl";
 import type {
@@ -31,22 +32,21 @@ export function loadTasks(): Task[] {
     if (saved !== null) {
       const parsed: unknown = JSON.parse(saved);
       if (isTaskList(parsed)) {
-        // Older saved tasks predate createdBy. Attribute them to the original
-        // default workspace owner so the migration does not hide existing work.
-        taskList = parsed.map((task) => ({
-          ...task,
-          createdBy: typeof task.createdBy === "string" && task.createdBy.trim()
-            ? task.createdBy
-            : "Mohammad",
-        }));
-        if (taskList.some((task, index) => task.createdBy !== parsed[index].createdBy)) {
+        // Migrate legacy names to stable IDs only when the name uniquely
+        // identifies one account. Ambiguous names remain legacy records.
+        taskList = parsed.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
+        if (taskList.some((task, index) =>
+          task.createdBy !== parsed[index].createdBy ||
+          task.createdById !== parsed[index].createdById ||
+          task.assignedToId !== parsed[index].assignedToId
+        )) {
           persistTasks();
         }
         return [...taskList];
       }
       console.warn("Saved NEXO tasks had an invalid format; using defaults.");
     }
-    taskList = [...initialTasks];
+    taskList = initialTasks.map((task) => migrateLegacyTaskIdentity(task, getUsers()));
     persistTasks();
   } catch (error) {
     console.error("Unable to load NEXO tasks:", error);
