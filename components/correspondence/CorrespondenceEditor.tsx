@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { FileText, Image as ImageIcon, Paperclip, Pencil, Save, X } from "lucide-react";
 
 export type CorrespondenceAttachment = {
@@ -118,7 +119,7 @@ export default function CorrespondenceEditor({ kind, content, attachments = [], 
             <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-300"><Paperclip size={15} /> Attachments ({attachments.length})</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {attachments.map((file) => <div key={file.id} className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/60 p-3">
-                {file.type.startsWith("image/") ? <a href={file.dataUrl} target="_blank" rel="noreferrer" className="mb-3 block"><img src={file.dataUrl} alt={file.name} className="max-h-56 w-full rounded-lg object-contain" /></a> : null}
+                {file.type.startsWith("image/") ? <a href={file.dataUrl} target="_blank" rel="noreferrer" className="mb-3 block"><Image src={file.dataUrl} alt={file.name} width={960} height={540} unoptimized className="max-h-56 w-full rounded-lg object-contain" /></a> : null}
                 <div className="flex items-center gap-2">
                   {file.type.startsWith("image/") ? <ImageIcon size={17} className="shrink-0 text-cyan-300" /> : <FileText size={17} className="shrink-0 text-cyan-300" />}
                   <span className="min-w-0 flex-1 truncate text-sm text-slate-300">{file.name}</span>
