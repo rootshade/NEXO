@@ -6,7 +6,7 @@ export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
 import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
-import { isTaskAssignedTo } from "@/data/taskAssignment.cjs";
+import { canUserViewTask } from "@/data/taskAccessPolicy.cjs";
 import { canViewCorrespondenceRecord as canViewRecord, isCorrespondenceRecipientRecord as isRecipientRecord, isCorrespondenceSenderRecord as isSenderRecord } from "@/data/correspondenceOwnership.cjs";
 
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
@@ -73,26 +73,7 @@ export function canViewTask(
   task: { assignedTo: string; assignedToId?: string; createdBy?: string; createdById?: string },
   user: AccessUser
 ): boolean {
-  if (!canAccess(user, "tasks.view")) return false;
-
-  const sameName = (left: string | undefined, right: string) =>
-    (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
-
-  const hasStableCreatorId = typeof task.createdById === "string" && task.createdById.length > 0;
-  const isCreator = hasStableCreatorId
-    ? isTaskCreatedBy(task, user)
-    : sameName(task.createdBy, user.name);
-
-  if (user.role === "Super Admin") {
-    return isCreator;
-  }
-
-  const hasStableAssigneeId = typeof task.assignedToId === "string" && task.assignedToId.length > 0;
-  const isAssignee = hasStableAssigneeId
-    ? isTaskAssignedTo(task, user)
-    : sameName(task.assignedTo, user.name);
-
-  return isAssignee || isCreator;
+  return canUserViewTask(task, user, canAccess(user, "tasks.view"));
 }
 
 /** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */
