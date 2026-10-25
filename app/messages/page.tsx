@@ -9,6 +9,7 @@ import {
   initialMessages,
   type Message,
 } from "@/data/messages";
+import { isMessageRecord, readArray, writeArray } from "@/data/correspondenceStorage.cjs";
 
 type MessageFilter = "All" | "Unread" | "Read" | "Sent";
 
@@ -24,6 +25,8 @@ export default function MessagesPage() {
     useState<Message[]>(initialMessages);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [canPersistMessages, setCanPersistMessages] = useState(false);
+  const [storageError, setStorageError] = useState("");
   const [canViewMessages, setCanViewMessages] = useState(false);
   const [canCreateMessages, setCanCreateMessages] = useState(false);
   const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
@@ -62,24 +65,18 @@ export default function MessagesPage() {
     };
   }, []);
 
-  // Load messages from localStorage after the initial render
+  // Load messages without deleting or overwriting data that fails validation.
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const savedMessages =
-        localStorage.getItem("nexo-messages");
+      const result = readArray(window.localStorage, "nexo-messages", isMessageRecord);
 
-      if (savedMessages) {
-        try {
-          const parsedMessages: unknown = JSON.parse(savedMessages);
-
-          if (Array.isArray(parsedMessages)) {
-            setMessages(parsedMessages as Message[]);
-          } else {
-            localStorage.removeItem("nexo-messages");
-          }
-        } catch {
-          localStorage.removeItem("nexo-messages");
-        }
+      if (result.ok && result.found && Array.isArray(result.value)) {
+        setMessages(result.value as Message[]);
+        setCanPersistMessages(true);
+      } else if (result.ok && !result.found) {
+        setCanPersistMessages(true);
+      } else {
+        setStorageError("Saved messages could not be read safely. The stored data has been left unchanged.");
       }
 
       setIsLoaded(true);
@@ -92,20 +89,15 @@ export default function MessagesPage() {
   useEffect(() => {
     function handleMessagesUpdated() {
       window.setTimeout(() => {
-        const savedMessages = localStorage.getItem("nexo-messages");
+        const result = readArray(window.localStorage, "nexo-messages", isMessageRecord);
 
-        if (!savedMessages) return;
-
-        try {
-          const parsedMessages: unknown = JSON.parse(savedMessages);
-
-          if (Array.isArray(parsedMessages)) {
-            setMessages(parsedMessages as Message[]);
-          } else {
-            localStorage.removeItem("nexo-messages");
-          }
-        } catch {
-          localStorage.removeItem("nexo-messages");
+        if (result.ok && result.found && Array.isArray(result.value)) {
+          setMessages(result.value as Message[]);
+          setCanPersistMessages(true);
+          setStorageError("");
+        } else if (!result.ok) {
+          setCanPersistMessages(false);
+          setStorageError("Saved messages could not be read safely. The stored data has been left unchanged.");
         }
       }, 0);
     }
@@ -117,15 +109,17 @@ export default function MessagesPage() {
     };
   }, []);
 
-  // Save messages to localStorage
+  // Do not persist defaults over unreadable data; report storage failures instead.
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !canPersistMessages) return;
 
-    localStorage.setItem(
-      "nexo-messages",
-      JSON.stringify(messages)
-    );
-  }, [messages, isLoaded]);
+    const result = writeArray(window.localStorage, "nexo-messages", messages, isMessageRecord);
+    if (!result.ok) {
+      setStorageError("Messages could not be saved. Check browser storage availability and try again.");
+    } else {
+      setStorageError("");
+    }
+  }, [messages, isLoaded, canPersistMessages]);
 
   // Filter messages
   const filteredMessages = useMemo(() => {
@@ -167,6 +161,10 @@ export default function MessagesPage() {
       setCanCreateMessages(false);
       return;
     }
+    if (!canPersistMessages) {
+      setStorageError("Sending is paused because existing message data could not be read safely.");
+      return;
+    }
     const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
     if (!selectedRecipient || !subject.trim() || !content.trim()) {
       return;
@@ -189,13 +187,15 @@ export default function MessagesPage() {
 
     const updatedMessages = [newMessage, ...messages];
 
-    // Persist before broadcasting so the notification center can read the new message immediately.
-    try {
-      localStorage.setItem("nexo-messages", JSON.stringify(updatedMessages));
-    } catch {
-      // The page state still updates if browser storage is unavailable.
+    // Persist before updating UI or broadcasting so a failed write cannot look successful.
+    const saveResult = writeArray(window.localStorage, "nexo-messages", updatedMessages, isMessageRecord);
+    if (!saveResult.ok) {
+      setStorageError("The message was not sent because it could not be saved in browser storage.");
+      return;
     }
 
+    setStorageError("");
+    setCanPersistMessages(true);
     setMessages(updatedMessages);
     window.dispatchEvent(new Event("nexo-messages-updated"));
 
@@ -256,6 +256,8 @@ export default function MessagesPage() {
         </button>}
         </div>
       </div>
+
+      {storageError && <div role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{storageError}</div>}
 
       {/* Message statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

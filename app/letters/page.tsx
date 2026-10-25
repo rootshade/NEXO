@@ -16,6 +16,7 @@ import {
   initialLetters,
   type Letter,
 } from "@/data/letters";
+import { isLetterRecord, readArray, writeArray } from "@/data/correspondenceStorage.cjs";
 
 type LetterFilter =
   | "All"
@@ -35,6 +36,8 @@ export default function LettersPage() {
     useState<Letter[]>(initialLetters);
 
   const [isLoaded, setIsLoaded] = useState(false);
+  const [canPersistLetters, setCanPersistLetters] = useState(false);
+  const [storageError, setStorageError] = useState("");
   const [canViewLetters, setCanViewLetters] = useState(false);
   const [canCreateLetters, setCanCreateLetters] = useState(false);
   const [currentUser, setCurrentUser] = useState<AccessUser | null>(null);
@@ -90,31 +93,33 @@ export default function LettersPage() {
   }, []);
 
   /*
-   * Load letters from localStorage after the initial render.
+   * Load letters without deleting or overwriting data that fails validation.
    * The deferred read keeps hydration deterministic in Next.js.
    */
   useEffect(() => {
     function syncLetters() {
-      try {
-        const savedLetters =
-          localStorage.getItem("nexo-letters");
+      const result = readArray(window.localStorage, "nexo-letters", isLetterRecord);
 
-        if (!savedLetters) return;
-
-        const parsedLetters: unknown = JSON.parse(savedLetters);
-
-        if (Array.isArray(parsedLetters)) {
-          setLetters(parsedLetters as Letter[]);
-        } else {
-          localStorage.removeItem("nexo-letters");
-        }
-      } catch {
-        localStorage.removeItem("nexo-letters");
+      if (result.ok && result.found && Array.isArray(result.value)) {
+        setLetters(result.value as Letter[]);
+        setCanPersistLetters(true);
+        setStorageError("");
+      } else if (!result.ok) {
+        setCanPersistLetters(false);
+        setStorageError("Saved letters could not be read safely. The stored data has been left unchanged.");
       }
     }
 
     const timer = window.setTimeout(() => {
-      syncLetters();
+      const result = readArray(window.localStorage, "nexo-letters", isLetterRecord);
+      if (result.ok && result.found && Array.isArray(result.value)) {
+        setLetters(result.value as Letter[]);
+        setCanPersistLetters(true);
+      } else if (result.ok && !result.found) {
+        setCanPersistLetters(true);
+      } else {
+        setStorageError("Saved letters could not be read safely. The stored data has been left unchanged.");
+      }
       setIsLoaded(true);
     }, 0);
 
@@ -127,16 +132,18 @@ export default function LettersPage() {
   }, []);
 
   /*
-   * Save letters to localStorage
+   * Do not persist defaults over unreadable data; report storage failures instead.
    */
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || !canPersistLetters) return;
 
-    localStorage.setItem(
-      "nexo-letters",
-      JSON.stringify(letters)
-    );
-  }, [letters, isLoaded]);
+    const result = writeArray(window.localStorage, "nexo-letters", letters, isLetterRecord);
+    if (!result.ok) {
+      setStorageError("Letters could not be saved. Check browser storage availability and try again.");
+    } else {
+      setStorageError("");
+    }
+  }, [letters, isLoaded, canPersistLetters]);
 
   /*
    * Filter letters
@@ -174,6 +181,10 @@ export default function LettersPage() {
       setError("You do not have permission to send letters.");
       return;
     }
+    if (!canPersistLetters) {
+      setStorageError("Sending is paused because existing letter data could not be read safely.");
+      return;
+    }
     const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
     if (!selectedRecipient) {
       setError("Please select an active recipient from the list.");
@@ -203,7 +214,13 @@ export default function LettersPage() {
     };
 
     const updatedLetters = [newLetter, ...letters];
-    localStorage.setItem("nexo-letters", JSON.stringify(updatedLetters));
+    const saveResult = writeArray(window.localStorage, "nexo-letters", updatedLetters, isLetterRecord);
+    if (!saveResult.ok) {
+      setStorageError("The letter was not sent because it could not be saved in browser storage.");
+      return;
+    }
+    setStorageError("");
+    setCanPersistLetters(true);
     setLetters(updatedLetters);
     window.dispatchEvent(new Event("nexo-letters-updated"));
 
@@ -273,6 +290,8 @@ export default function LettersPage() {
         </button>}
         </div>
       </div>
+
+      {storageError && <div role="alert" className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">{storageError}</div>}
 
       {/* Letter statistics */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
