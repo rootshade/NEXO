@@ -10,7 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { canAccess, canViewCorrespondence, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialLetters,
@@ -55,14 +55,14 @@ export default function LettersPage() {
   const [error, setError] = useState("");
 
   const visibleLetters = currentUser
-    ? letters.filter((letter) => canViewCorrespondence(letter.sender, letter.receiver, currentUser))
+    ? letters.filter((letter) => canViewCorrespondenceRecord(letter, currentUser))
     : [];
 
   const inboxLetters = currentUser
-    ? visibleLetters.filter((letter) => letter.receiver === currentUser.name)
+    ? visibleLetters.filter((letter) => isCorrespondenceRecipientRecord(letter, currentUser))
     : [];
   const sentLetters = currentUser
-    ? visibleLetters.filter((letter) => letter.sender === currentUser.name)
+    ? visibleLetters.filter((letter) => isCorrespondenceSenderRecord(letter, currentUser))
     : [];
   const unreadCount = inboxLetters.filter((letter) => letter.status === "Unread").length;
   const readCount = inboxLetters.filter((letter) => letter.status === "Read").length;
@@ -142,7 +142,7 @@ export default function LettersPage() {
    * Filter letters
    */
   const filteredLetters = visibleLetters.filter((letter) => {
-    const isSender = currentUser?.name === letter.sender;
+    const isSender = currentUser ? isCorrespondenceSenderRecord(letter, currentUser) : false;
     const matchesFilter =
       activeFilter === "All" ||
       (activeFilter === "Sent" && isSender) ||
@@ -194,7 +194,9 @@ export default function LettersPage() {
       id: Date.now(),
       subject: subject.trim(),
       sender: getCurrentUser().name,
+      senderId: getCurrentUser().id,
       receiver: selectedRecipient.name,
+      receiverId: selectedRecipient.id,
       date: new Date().toISOString().split("T")[0],
       status: "Unread",
       content: content.trim(),
