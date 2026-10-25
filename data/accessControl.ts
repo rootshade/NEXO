@@ -6,6 +6,7 @@ export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
 import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
+import { isTaskAssignedTo } from "@/data/taskAssignment.cjs";
 import { canViewCorrespondenceRecord as canViewRecord, isCorrespondenceRecipientRecord as isRecipientRecord, isCorrespondenceSenderRecord as isSenderRecord } from "@/data/correspondenceOwnership.cjs";
 
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
@@ -69,7 +70,7 @@ export function getCurrentUser(): AccessUser {
 
 /** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
 export function canViewTask(
-  task: { assignedTo: string; createdBy?: string; createdById?: string },
+  task: { assignedTo: string; assignedToId?: string; createdBy?: string; createdById?: string },
   user: AccessUser
 ): boolean {
   if (!canAccess(user, "tasks.view")) return false;
@@ -86,7 +87,12 @@ export function canViewTask(
     return isCreator;
   }
 
-  return sameName(task.assignedTo, user.name) || isCreator;
+  const hasStableAssigneeId = typeof task.assignedToId === "string" && task.assignedToId.length > 0;
+  const isAssignee = hasStableAssigneeId
+    ? isTaskAssignedTo(task, user)
+    : sameName(task.assignedTo, user.name);
+
+  return isAssignee || isCreator;
 }
 
 /** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */
