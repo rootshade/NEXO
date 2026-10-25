@@ -17,7 +17,7 @@ import {
   initialMessages,
   type Message,
 } from "@/data/messages";
-import { canAccess, canViewCorrespondence, getCurrentUser, isCorrespondenceRecipient } from "@/data/accessControl";
+import { canAccess, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser } from "@/data/accessControl";
 
 type MessageDetailsPageProps = {
   params: Promise<{
@@ -93,7 +93,7 @@ export default function MessageDetailsPage({
         return;
       }
 
-      if (!canViewCorrespondence(foundMessage.sender, foundMessage.receiver, getCurrentUser())) {
+      if (!canViewCorrespondenceRecord(foundMessage, getCurrentUser())) {
         if (!cancelled) {
           setAccessDenied(true);
           setLoading(false);
@@ -106,7 +106,7 @@ export default function MessageDetailsPage({
        * when the user actually opens it.
        */
       const currentUser = getCurrentUser();
-      if (foundMessage.status === "Unread" && isCorrespondenceRecipient(foundMessage.receiver, currentUser)) {
+      if (foundMessage.status === "Unread" && isCorrespondenceRecipientRecord(foundMessage, currentUser)) {
         const updatedMessages = messages.map(
           (item) =>
             item.id === foundMessage.id
@@ -145,7 +145,7 @@ export default function MessageDetailsPage({
   }, [params, accessVersion]);
 
   function confirmDeleteMessage() {
-    if (!message || message.sender !== getCurrentUser()?.name) {
+    if (!message || !isCorrespondenceSenderRecord(message, getCurrentUser())) {
       setDeleteError("Only the sender can delete this message.");
       return;
     }
@@ -165,7 +165,7 @@ export default function MessageDetailsPage({
 
   function saveMessageContent(content: string, attachments: CorrespondenceAttachment[]) {
     const userName = getCurrentUser()?.name;
-    if (!message || !userName || (userName !== message.sender && userName !== message.receiver)) {
+    if (!message || !userName || (!isCorrespondenceSenderRecord(message, getCurrentUser()) && !isCorrespondenceRecipientRecord(message, getCurrentUser()))) {
       throw new Error("Only the sender or recipient can edit this message.");
     }
     const raw = localStorage.getItem("nexo-messages");
@@ -309,7 +309,7 @@ export default function MessageDetailsPage({
               </h1>
             </div>
 
-            {message.sender === getCurrentUser()?.name && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete message</button>}
+            {isCorrespondenceSenderRecord(message, getCurrentUser()) && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete message</button>}
 
             {/* Date */}
             <div
