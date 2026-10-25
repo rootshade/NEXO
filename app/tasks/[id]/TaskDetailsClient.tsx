@@ -27,7 +27,8 @@ import TaskComments from "@/components/tasks/TaskComments";
 import TaskActivityLog from "@/components/tasks/TaskActivityLog";
 import TaskAttachments from "@/components/tasks/TaskAttachments";
 import { cleanupTaskData } from "@/data/taskCleanup";
-import { canAccess, canViewTask, getCurrentUser } from "@/data/accessControl";
+import { canAccess, canViewTask, getCurrentUser, getUsers } from "@/data/accessControl";
+import type { AccessUser } from "@/data/accessControl";
 import { isValidDate } from "@/data/taskValidation";
 
 type TaskDetailsClientProps = {
@@ -98,9 +99,10 @@ export default function TaskDetailsClient({
       task?.status ?? "Pending"
     );
 
-  const [assignedTo, setAssignedTo] = useState(
-    task?.assignedTo ?? ""
+  const [assignedToId, setAssignedToId] = useState(
+    task?.assignedToId ?? (task?.assignedTo ? `legacy:${task.assignedTo}` : "")
   );
+  const [availableUsers, setAvailableUsers] = useState<AccessUser[]>([]);
 
   const [deadline, setDeadline] = useState(
     task?.deadline ?? ""
@@ -115,6 +117,7 @@ export default function TaskDetailsClient({
       setCanDeleteTask(canAccess(user, "tasks.delete"));
       const currentTask = loadTasks().find((item) => item.id === id);
       setIsAccessDenied(!!currentTask && !canViewTask(currentTask, user));
+      setAvailableUsers(getUsers().filter((item) => item.status === "Active"));
     }
 
     refreshTaskPermissions();
@@ -130,7 +133,7 @@ export default function TaskDetailsClient({
       setDescription(savedTask?.description ?? "");
       setPriority(savedTask?.priority ?? "Medium");
       setStatus(savedTask?.status ?? "Pending");
-      setAssignedTo(savedTask?.assignedTo ?? "");
+      setAssignedToId(savedTask?.assignedToId ?? (savedTask?.assignedTo ? `legacy:${savedTask.assignedTo}` : ""));
       setDeadline(savedTask?.deadline ?? "");
       setIsLoading(false);
     }, 0);
@@ -214,7 +217,7 @@ export default function TaskDetailsClient({
     setDescription(task?.description ?? "");
     setPriority(task?.priority ?? "Medium");
     setStatus(task?.status ?? "Pending");
-    setAssignedTo(task?.assignedTo ?? "");
+    setAssignedToId(task?.assignedToId ?? (task?.assignedTo ? `legacy:${task.assignedTo}` : ""));
     setDeadline(task?.deadline ?? "");
     setEditError("");
     setIsEditing(false);
@@ -232,7 +235,7 @@ export default function TaskDetailsClient({
     if (
       !title.trim() ||
       !description.trim() ||
-      !assignedTo.trim() ||
+      !assignedToId ||
       !deadline
     ) {
       setEditError("Please complete all required fields.");
@@ -249,8 +252,13 @@ export default function TaskDetailsClient({
       return;
     }
 
-    if (assignedTo.trim().length > 100) {
-      setEditError("Assignee name cannot exceed 100 characters.");
+    const isLegacyAssignee = assignedToId.startsWith("legacy:");
+    const assignee = isLegacyAssignee
+      ? undefined
+      : getUsers().find((user) => user.id === assignedToId && user.status === "Active");
+    const assigneeName = isLegacyAssignee ? assignedToId.slice("legacy:".length) : assignee?.name;
+    if (!assigneeName || (!isLegacyAssignee && !assignee)) {
+      setEditError("Select an active user to assign this task.");
       return;
     }
 
@@ -264,7 +272,8 @@ export default function TaskDetailsClient({
       description: description.trim(),
       priority,
       status,
-      assignedTo: assignedTo.trim(),
+      assignedTo: assigneeName,
+      assignedToId: isLegacyAssignee ? undefined : assignee?.id,
       deadline,
     });
 
@@ -535,14 +544,12 @@ export default function TaskDetailsClient({
                   Assigned To
                 </label>
 
-                <input
-                  type="text"
-                  value={assignedTo}
+                <select
+                  value={assignedToId}
                   onChange={(event) => {
-                    setAssignedTo(event.target.value);
+                    setAssignedToId(event.target.value);
                     setEditError("");
                   }}
-                  maxLength={100}
                   required
                   className="
                     w-full
@@ -556,7 +563,13 @@ export default function TaskDetailsClient({
                     text-white
                     outline-none
                   "
-                />
+                >
+                  {task.assignedToId && <option value={task.assignedToId}>{task.assignedTo} (current assignee)</option>}
+                  {!task.assignedToId && <option value={`legacy:${task.assignedTo}`}>{task.assignedTo} (existing assignment)</option>}
+                  {availableUsers.filter((user) => user.id !== task.assignedToId).map((user) => (
+                    <option key={user.id} value={user.id}>{user.name} · {user.role}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
