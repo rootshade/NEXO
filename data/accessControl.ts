@@ -4,6 +4,8 @@ export const USERS_KEY = "nexo-users";
 export const PERMISSIONS_KEY = "nexo-permissions";
 export const SUPER_ADMIN_ID = "user-mohammad";
 
+import { hasRolePermission } from "@/data/permissionPolicy.cjs";
+
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
 
 const DEFAULT_USERS: AccessUser[] = [
@@ -11,50 +13,6 @@ const DEFAULT_USERS: AccessUser[] = [
   { id: "user-ali", name: "Ali", email: "ali@nexo.local", role: "User", status: "Active" },
   { id: "user-sara", name: "Sara", email: "sara@nexo.local", role: "Manager", status: "Active" },
 ];
-
-const DEFAULT_ROLE_PERMISSIONS: Record<string, string[]> = {
-  Admin: [
-    "dashboard",
-    "tasks.view",
-    "tasks.create",
-    "tasks.edit",
-    "tasks.delete",
-    "letters.view",
-    "letters.create",
-    "messages.view",
-    "messages.create",
-    "users",
-    "roles",
-    "settings",
-  ],
-  Manager: [
-    "dashboard",
-    "tasks.view",
-    "tasks.create",
-    "tasks.edit",
-    "letters.view",
-    "letters.create",
-    "messages.view",
-    "messages.create",
-    "settings",
-  ],
-  User: [
-    "dashboard",
-    "tasks.view",
-    "letters.view",
-    "letters.create",
-    "messages.view",
-    "messages.create",
-    "settings",
-  ],
-};
-
-const LEGACY_PERMISSION_FALLBACKS: Record<string, string> = {
-  "letters.view": "letters",
-  "letters.create": "letters",
-  "messages.view": "messages",
-  "messages.create": "messages",
-};
 
 const PERMISSION_BY_PATH: Record<string, string> = {
   "/": "dashboard",
@@ -151,31 +109,17 @@ export function canAccess(user: AccessUser, permission: string): boolean {
   if (user.status !== "Active") return false;
   if (user.role === "Super Admin") return true;
 
-  const legacyPermission = LEGACY_PERMISSION_FALLBACKS[permission];
+  let overrides: unknown = null;
 
   if (typeof window !== "undefined") {
     try {
-      const raw: unknown = JSON.parse(window.localStorage.getItem(PERMISSIONS_KEY) || "null");
-      if (raw && typeof raw === "object") {
-        const rolePermissions = (raw as Record<string, unknown>)[user.role];
-        if (rolePermissions && typeof rolePermissions === "object") {
-          const permissions = rolePermissions as Record<string, unknown>;
-          const value = permissions[permission];
-          if (typeof value === "boolean") return value;
-
-          if (legacyPermission) {
-            const legacyValue = permissions[legacyPermission];
-            if (typeof legacyValue === "boolean") return legacyValue;
-          }
-        }
-      }
+      overrides = JSON.parse(window.localStorage.getItem(PERMISSIONS_KEY) || "null");
     } catch {
-      // Invalid browser data falls through to the built-in defaults.
+      // Invalid browser data falls back to built-in defaults.
     }
   }
 
-  return DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(permission) ??
-    (legacyPermission ? DEFAULT_ROLE_PERMISSIONS[user.role]?.includes(legacyPermission) ?? false : false);
+  return hasRolePermission(user.role, permission, overrides);
 }
 
 export function permissionForPath(pathname: string): string | null {
