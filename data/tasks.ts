@@ -15,8 +15,10 @@ export type Task = {
   status: TaskStatus;
   priority: TaskPriority;
   assignedTo: string;
-  /** Name of the user who created this task. */
+  /** Display name retained for existing UI and legacy task records. */
   createdBy?: string;
+  /** Stable account ID for creator ownership checks on newly created tasks. */
+  createdById?: string;
 
   // Task dates
   createdAt: string;
