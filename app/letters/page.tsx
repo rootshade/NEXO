@@ -104,6 +104,7 @@ export default function LettersPage() {
         setLetters(result.value as Letter[]);
         setStorageError("");
       } else if (!result.ok) {
+        setCanPersistLetters(false);
         setStorageError("Saved letters could not be read safely. The stored data has been left unchanged.");
       }
     }
@@ -177,6 +178,10 @@ export default function LettersPage() {
     if (!canAccess(getCurrentUser(), "letters.create")) {
       setCanCreateLetters(false);
       setError("You do not have permission to send letters.");
+      return;
+    }
+    if (!canPersistLetters) {
+      setStorageError("Sending is paused because existing letter data could not be read safely.");
       return;
     }
     const selectedRecipient = availableRecipients.find((candidate) => candidate.name === receiver);
