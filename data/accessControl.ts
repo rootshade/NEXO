@@ -5,6 +5,7 @@ export const PERMISSIONS_KEY = "nexo-permissions";
 export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
+import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
 
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
 
@@ -76,10 +77,10 @@ export function canViewTask(
     (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
 
   if (user.role === "Super Admin") {
-    return sameName(task.createdBy, user.name);
+    return isTaskCreatedBy(task, user) || sameName(task.createdBy, user.name);
   }
 
-  return sameName(task.assignedTo, user.name) || sameName(task.createdBy, user.name);
+  return sameName(task.assignedTo, user.name) || isTaskCreatedBy(task, user) || sameName(task.createdBy, user.name);
 }
 
 /** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */
