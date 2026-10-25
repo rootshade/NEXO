@@ -10,7 +10,7 @@ import {
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { canAccess, canViewCorrespondence, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialLetters,
