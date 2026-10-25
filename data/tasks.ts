@@ -15,6 +15,8 @@ export type Task = {
   status: TaskStatus;
   priority: TaskPriority;
   assignedTo: string;
+  /** Stable account ID for the assignee; absent on legacy tasks. */
+  assignedToId?: string;
   /** Display name retained for existing UI and legacy task records. */
   createdBy?: string;
   /** Stable account ID for creator ownership checks on newly created tasks. */

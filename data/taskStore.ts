@@ -1,7 +1,7 @@
 import { tasks as initialTasks } from "./tasks";
 import { isTaskList } from "./taskValidation";
 import { addTaskActivity } from "./taskActivity";
-import { canAccess, canViewTask, getCurrentUser } from "./accessControl";
+import { canAccess, canViewTask, getCurrentUser, getUsers } from "./accessControl";
 import type {
   Task,
   TaskPriority,
@@ -70,11 +70,15 @@ export function createTask(data: {
   description: string;
   priority: TaskPriority;
   assignedTo: string;
+  assignedToId: string;
   deadline: string;
 }): Task | undefined {
   if (typeof window !== "undefined" && !canAccess(getCurrentUser(), "tasks.create")) {
     return undefined;
   }
+
+  const assignee = getUsers().find((user) => user.id === data.assignedToId && user.status === "Active");
+  if (!assignee) return undefined;
 
   // Re-read browser storage before every write so stale in-memory state
   // cannot overwrite tasks saved by a previous page render.
@@ -91,7 +95,8 @@ export function createTask(data: {
     description: data.description,
     status: "Pending",
     priority: data.priority,
-    assignedTo: data.assignedTo,
+    assignedTo: assignee.name,
+    assignedToId: assignee.id,
     createdBy: typeof window !== "undefined" ? getCurrentUser().name : "Mohammad",
     createdById: typeof window !== "undefined" ? getCurrentUser().id : "user-mohammad",
     createdAt: new Date().toISOString().split("T")[0],

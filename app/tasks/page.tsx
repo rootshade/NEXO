@@ -111,14 +111,15 @@ export default function TasksPage() {
     return sortBy === "newest" ? safeB - safeA : safeA - safeB;
   });
 
-  function handleCreateTask(data: { title: string; description: string; priority: "Low" | "Medium" | "High"; assignedTo: string; deadline: string }) {
+  function handleCreateTask(data: { title: string; description: string; priority: "Low" | "Medium" | "High"; assignedTo: string; assignedToId: string; deadline: string }) {
     const user = getCurrentUser();
     if (!canAccess(user, "tasks.create")) {
       setCanCreateTasks(false);
       setIsCreateModalOpen(false);
       return;
     }
-    createTask(data);
+    const created = createTask(data);
+    if (!created) return;
     setTasks(getTasks());
   }
 

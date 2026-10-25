@@ -40,7 +40,9 @@ function isTask(value) {
     typeof task.assignedTo === "string" &&
     isValidDate(task.createdAt) &&
     isValidDate(task.deadline) &&
-    (task.createdBy === undefined || typeof task.createdBy === "string")
+    (task.createdBy === undefined || typeof task.createdBy === "string") &&
+    (task.createdById === undefined || typeof task.createdById === "string") &&
+    (task.assignedToId === undefined || typeof task.assignedToId === "string")
   );
 }
 
