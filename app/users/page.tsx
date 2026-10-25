@@ -123,21 +123,22 @@ export default function UsersPage() {
     };
   }, []);
 
-  function persist(nextUsers: AppUser[]) {
+  function persist(nextUsers: AppUser[]): boolean {
     if (!storageReady) {
       setFormError("User storage is not ready. Refresh the page and try again.");
-      return;
+      return false;
     }
     const result = writeUsers(window.localStorage, STORAGE_KEY, nextUsers);
     if (!result.ok) {
       setFormError(result.reason === "invalid_data"
         ? "The user list failed validation and was not saved."
         : "Unable to save users in this browser. Check available storage.");
-      return;
+      return false;
     }
     setUsers(nextUsers);
     window.dispatchEvent(new CustomEvent(USER_EVENT));
     setFormError("");
+    return true;
   }
 
   function openCreate() {
@@ -183,13 +184,14 @@ export default function UsersPage() {
       return;
     }
 
+    let didSave = false;
     if (editingId) {
       const existing = users.find((user) => user.id === editingId);
       if (!existing) return;
       // Super Admin identity and role cannot be changed from this screen.
       const isProtectedAdmin = existing.id === SUPER_ADMIN_ID || existing.role === "Super Admin";
       const nextRole = isProtectedAdmin ? "Super Admin" : role;
-      persist(users.map((user) => user.id === editingId
+      didSave = persist(users.map((user) => user.id === editingId
         ? { ...user, name: cleanName, email: cleanEmail, role: nextRole, status: isProtectedAdmin ? "Active" : user.status }
         : user));
     } else {
@@ -201,9 +203,9 @@ export default function UsersPage() {
         status: "Active",
         createdAt: new Date().toISOString().slice(0, 10),
       };
-      persist([newUser, ...users]);
+      didSave = persist([newUser, ...users]);
     }
-    setModalOpen(false);
+    if (didSave) setModalOpen(false);
   }
 
   function toggleStatus(user: AppUser) {
