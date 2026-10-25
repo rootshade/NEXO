@@ -10,6 +10,9 @@ export type Letter = {
   subject: string;
   sender: string;
   receiver: string;
+  /** Stable participant IDs for newly created correspondence. */
+  senderId?: string;
+  receiverId?: string;
   date: string;
   status: LetterStatus;
   content: string;
