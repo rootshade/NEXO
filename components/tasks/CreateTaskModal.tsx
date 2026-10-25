@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 
 import type { TaskPriority } from "@/data/tasks";
+import { getUsers } from "@/data/accessControl";
+import type { AccessUser } from "@/data/accessControl";
 
 type CreateTaskModalProps = {
   isOpen: boolean;
@@ -13,6 +15,7 @@ type CreateTaskModalProps = {
     description: string;
     priority: TaskPriority;
     assignedTo: string;
+    assignedToId: string;
     deadline: string;
   }) => void;
 };
@@ -25,15 +28,32 @@ export default function CreateTaskModal({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TaskPriority>("Medium");
-  const [assignedTo, setAssignedTo] = useState("");
+  const [assignedToId, setAssignedToId] = useState("");
+  const [availableUsers, setAvailableUsers] = useState<AccessUser[]>([]);
   const [deadline, setDeadline] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const refreshUsers = () => {
+      const activeUsers = getUsers().filter((user) => user.status === "Active");
+      setAvailableUsers(activeUsers);
+      setAssignedToId((current) => activeUsers.some((user) => user.id === current) ? current : (activeUsers[0]?.id ?? ""));
+    };
+    refreshUsers();
+    window.addEventListener("storage", refreshUsers);
+    window.addEventListener("nexo-users-updated", refreshUsers);
+    return () => {
+      window.removeEventListener("storage", refreshUsers);
+      window.removeEventListener("nexo-users-updated", refreshUsers);
+    };
+  }, [isOpen]);
 
   function resetForm() {
     setTitle("");
     setDescription("");
     setPriority("Medium");
-    setAssignedTo("");
+    setAssignedToId("");
     setDeadline("");
     setError("");
   }
@@ -47,7 +67,7 @@ export default function CreateTaskModal({
     event.preventDefault();
     setError("");
 
-    if (!title.trim() || !description.trim() || !assignedTo.trim() || !deadline) {
+    if (!title.trim() || !description.trim() || !assignedToId || !deadline) {
       setError("Please complete all required fields.");
       return;
     }
@@ -62,8 +82,9 @@ export default function CreateTaskModal({
       return;
     }
 
-    if (assignedTo.trim().length > 100) {
-      setError("Assignee name cannot exceed 100 characters.");
+    const assignee = getUsers().find((user) => user.id === assignedToId && user.status === "Active");
+    if (!assignee) {
+      setError("Select an active user to assign this task.");
       return;
     }
 
@@ -78,7 +99,8 @@ export default function CreateTaskModal({
       title: title.trim(),
       description: description.trim(),
       priority,
-      assignedTo: assignedTo.trim(),
+      assignedTo: assignee.name,
+      assignedToId: assignee.id,
       deadline,
     });
 
@@ -195,19 +217,22 @@ export default function CreateTaskModal({
             <label htmlFor="task-assigned" className={labelClass}>
               Assigned To
             </label>
-            <input
+            <select
               id="task-assigned"
-              type="text"
-              value={assignedTo}
+              value={assignedToId}
               onChange={(event) => {
-                setAssignedTo(event.target.value);
+                setAssignedToId(event.target.value);
                 setError("");
               }}
-              placeholder="Enter user name"
-              maxLength={100}
               required
               className={inputClass}
-            />
+            >
+              <option value="" disabled>Select an active user</option>
+              {availableUsers.map((user) => (
+                <option key={user.id} value={user.id}>{user.name} · {user.role}</option>
+              ))}
+            </select>
+            {availableUsers.length === 0 && <p className="mt-2 text-xs text-amber-300">No active users are available to assign.</p>}
           </div>
 
           <div>
