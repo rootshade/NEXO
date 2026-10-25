@@ -6,6 +6,9 @@ export type Message = {
   id: number;
   sender: string;
   receiver: string;
+  /** Stable participant IDs for newly created correspondence. */
+  senderId?: string;
+  receiverId?: string;
   subject: string;
   content: string;
   date: string;

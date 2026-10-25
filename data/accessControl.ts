@@ -6,6 +6,7 @@ export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
 import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
+import { canViewCorrespondenceRecord as canViewRecord, isCorrespondenceRecipientRecord as isRecipientRecord, isCorrespondenceSenderRecord as isSenderRecord } from "@/data/correspondenceOwnership.cjs";
 
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
 
@@ -104,10 +105,32 @@ export function canViewCorrespondence(
   return matchesCorrespondenceName(sender, user.name) || matchesCorrespondenceName(receiver, user.name);
 }
 
+/** Prefer stable participant IDs for records that have them; preserve name matching for legacy records. */
+export function canViewCorrespondenceRecord(
+  record: { sender: string; receiver: string; senderId?: string; receiverId?: string },
+  user: AccessUser
+): boolean {
+  return canViewRecord(record, user);
+}
+
 /** Only the addressed recipient can mark a correspondence item as read. */
 export function isCorrespondenceRecipient(receiver: string, user: AccessUser): boolean {
   if (user.status !== "Active") return false;
   return matchesCorrespondenceName(receiver, user.name);
+}
+
+export function isCorrespondenceRecipientRecord(
+  record: { sender: string; receiver: string; senderId?: string; receiverId?: string },
+  user: AccessUser
+): boolean {
+  return isRecipientRecord(record, user);
+}
+
+export function isCorrespondenceSenderRecord(
+  record: { sender: string; receiver: string; senderId?: string; receiverId?: string },
+  user: AccessUser
+): boolean {
+  return isSenderRecord(record, user);
 }
 
 export function canAccess(user: AccessUser, permission: string): boolean {

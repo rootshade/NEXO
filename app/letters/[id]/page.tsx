@@ -17,7 +17,7 @@ import {
   initialLetters,
   type Letter,
 } from "@/data/letters";
-import { canAccess, canViewCorrespondence, getCurrentUser, isCorrespondenceRecipient } from "@/data/accessControl";
+import { canAccess, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser } from "@/data/accessControl";
 
 type LetterDetailsPageProps = {
   params: Promise<{ id: string }>;
@@ -114,7 +114,7 @@ export default function LetterDetailsPage({
         return;
       }
 
-      if (!canViewCorrespondence(foundLetter.sender, foundLetter.receiver, getCurrentUser())) {
+      if (!canViewCorrespondenceRecord(foundLetter, getCurrentUser())) {
         if (!cancelled) {
           setAccessDenied(true);
           setLoading(false);
@@ -123,7 +123,7 @@ export default function LetterDetailsPage({
       }
 
       const currentUser = getCurrentUser();
-      if (foundLetter.status === "Unread" && isCorrespondenceRecipient(foundLetter.receiver, currentUser)) {
+      if (foundLetter.status === "Unread" && isCorrespondenceRecipientRecord(foundLetter, currentUser)) {
         const updatedLetters = letters.map((item) =>
           item.id === foundLetter.id
             ? {
@@ -167,7 +167,7 @@ export default function LetterDetailsPage({
   }, [params, accessVersion]);
 
   function confirmDeleteLetter() {
-    if (!letter || letter.sender !== getCurrentUser()?.name) {
+    if (!letter || !isCorrespondenceSenderRecord(letter, getCurrentUser())) {
       setDeleteError("Only the sender can delete this letter.");
       return;
     }
@@ -187,7 +187,7 @@ export default function LetterDetailsPage({
 
   function saveLetterContent(content: string, attachments: CorrespondenceAttachment[]) {
     const userName = getCurrentUser()?.name;
-    if (!letter || !userName || (userName !== letter.sender && userName !== letter.receiver)) {
+    if (!letter || !userName || (!isCorrespondenceSenderRecord(letter, getCurrentUser()) && !isCorrespondenceRecipientRecord(letter, getCurrentUser()))) {
       throw new Error("Only the sender or recipient can edit this letter.");
     }
     const raw = localStorage.getItem(LETTERS_STORAGE_KEY);
@@ -292,7 +292,7 @@ export default function LetterDetailsPage({
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
-                {letter.sender === getCurrentUser()?.name && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete letter</button>}
+                {isCorrespondenceSenderRecord(letter, getCurrentUser()) && <button type="button" onClick={() => { setDeleteError(""); setShowDeleteModal(true); }} className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"><Trash2 size={16} /> Delete letter</button>}
                 <div className="flex items-center gap-2 text-sm text-slate-500">
                 <Calendar className="h-4 w-4" />
                 {letter.date}
