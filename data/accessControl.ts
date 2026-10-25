@@ -5,7 +5,6 @@ export const PERMISSIONS_KEY = "nexo-permissions";
 export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
-import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
 import { canUserViewTask } from "@/data/taskAccessPolicy.cjs";
 import { canViewCorrespondenceRecord as canViewRecord, isCorrespondenceRecipientRecord as isRecipientRecord, isCorrespondenceSenderRecord as isSenderRecord } from "@/data/correspondenceOwnership.cjs";
 
