@@ -5,6 +5,7 @@ export const PERMISSIONS_KEY = "nexo-permissions";
 export const SUPER_ADMIN_ID = "user-mohammad";
 
 import { hasRolePermission } from "@/data/permissionPolicy.cjs";
+import { isTaskCreatedBy } from "@/data/taskOwnership.cjs";
 
 export type AccessUser = { id: string; name: string; email: string; role: string; status: "Active" | "Inactive" };
 
@@ -67,7 +68,7 @@ export function getCurrentUser(): AccessUser {
 
 /** A task creator keeps visibility of tasks they created; the Super Admin is restricted to their own created tasks. */
 export function canViewTask(
-  task: { assignedTo: string; createdBy?: string },
+  task: { assignedTo: string; createdBy?: string; createdById?: string },
   user: AccessUser
 ): boolean {
   if (!canAccess(user, "tasks.view")) return false;
@@ -75,11 +76,16 @@ export function canViewTask(
   const sameName = (left: string | undefined, right: string) =>
     (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
 
+  const hasStableCreatorId = typeof task.createdById === "string" && task.createdById.length > 0;
+  const isCreator = hasStableCreatorId
+    ? isTaskCreatedBy(task, user)
+    : sameName(task.createdBy, user.name);
+
   if (user.role === "Super Admin") {
-    return sameName(task.createdBy, user.name);
+    return isCreator;
   }
 
-  return sameName(task.assignedTo, user.name) || sameName(task.createdBy, user.name);
+  return sameName(task.assignedTo, user.name) || isCreator;
 }
 
 /** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */

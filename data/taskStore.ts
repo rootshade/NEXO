@@ -93,6 +93,7 @@ export function createTask(data: {
     priority: data.priority,
     assignedTo: data.assignedTo,
     createdBy: typeof window !== "undefined" ? getCurrentUser().name : "Mohammad",
+    createdById: typeof window !== "undefined" ? getCurrentUser().id : "user-mohammad",
     createdAt: new Date().toISOString().split("T")[0],
     deadline: data.deadline,
   };
