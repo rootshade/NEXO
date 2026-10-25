@@ -93,6 +93,7 @@ export default function MessagesPage() {
 
         if (result.ok && result.found && Array.isArray(result.value)) {
           setMessages(result.value as Message[]);
+          setCanPersistMessages(true);
           setStorageError("");
         } else if (!result.ok) {
           setCanPersistMessages(false);
