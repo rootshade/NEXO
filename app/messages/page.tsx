@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Mail, MailOpen, MessageSquare, Plus, Search, Send, X } from "lucide-react";
-import { canAccess, canViewCorrespondence, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
+import { canAccess, canViewCorrespondence, canViewCorrespondenceRecord, isCorrespondenceRecipientRecord, isCorrespondenceSenderRecord, getCurrentUser, getUsers, CURRENT_USER_EVENT, type AccessUser } from "@/data/accessControl";
 
 import {
   initialMessages,
@@ -130,11 +130,11 @@ export default function MessagesPage() {
   // Filter messages
   const filteredMessages = useMemo(() => {
     const userMessages = currentUser
-      ? messages.filter((message) => canViewCorrespondence(message.sender, message.receiver, currentUser))
+      ? messages.filter((message) => canViewCorrespondenceRecord(message, currentUser))
       : [];
 
     return userMessages.filter((message) => {
-      const isSender = currentUser?.name === message.sender;
+      const isSender = currentUser ? isCorrespondenceSenderRecord(message, currentUser) : false;
       const matchesFilter =
         activeFilter === "All" ||
         (activeFilter === "Sent" && isSender) ||
@@ -175,7 +175,9 @@ export default function MessagesPage() {
     const newMessage: Message = {
       id: Date.now(),
       sender: getCurrentUser().name,
+      senderId: getCurrentUser().id,
       receiver: selectedRecipient.name,
+      receiverId: selectedRecipient.id,
       subject: subject.trim(),
       content: content.trim(),
       date: new Date()
@@ -259,9 +261,9 @@ export default function MessagesPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           { label: "Total Messages", value: currentUser ? messages.filter((message) => canViewCorrespondence(message.sender, message.receiver, currentUser)).length : 0, icon: MessageSquare, color: "text-indigo-300", tile: "bg-indigo-400/10", border: "border-indigo-400/20" },
-          { label: "Unread Messages", value: currentUser ? messages.filter((message) => message.receiver === currentUser.name && message.status === "Unread").length : 0, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
-          { label: "Read Messages", value: currentUser ? messages.filter((message) => message.receiver === currentUser.name && message.status === "Read").length : 0, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
-          { label: "Sent by Me", value: currentUser ? messages.filter((message) => message.sender === currentUser.name).length : 0, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
+          { label: "Unread Messages", value: currentUser ? messages.filter((message) => isCorrespondenceRecipientRecord(message, currentUser) && message.status === "Unread").length : 0, icon: MailOpen, color: "text-amber-300", tile: "bg-amber-400/10", border: "border-amber-400/20" },
+          { label: "Read Messages", value: currentUser ? messages.filter((message) => isCorrespondenceRecipientRecord(message, currentUser) && message.status === "Read").length : 0, icon: CheckCircle2, color: "text-emerald-300", tile: "bg-emerald-400/10", border: "border-emerald-400/20" },
+          { label: "Sent by Me", value: currentUser ? messages.filter((message) => isCorrespondenceSenderRecord(message, currentUser)).length : 0, icon: Send, color: "text-cyan-300", tile: "bg-cyan-400/10", border: "border-cyan-400/20" },
         ].map((stat) => {
           const Icon = stat.icon;
           return <div key={stat.label} className={`rounded-2xl border ${stat.border} bg-slate-900 p-5 transition hover:-translate-y-0.5 hover:bg-slate-800/80`}>
