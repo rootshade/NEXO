@@ -76,11 +76,16 @@ export function canViewTask(
   const sameName = (left: string | undefined, right: string) =>
     (left ?? "").trim().toLowerCase() === right.trim().toLowerCase();
 
+  const hasStableCreatorId = typeof task.createdById === "string" && task.createdById.length > 0;
+  const isCreator = hasStableCreatorId
+    ? isTaskCreatedBy(task, user)
+    : sameName(task.createdBy, user.name);
+
   if (user.role === "Super Admin") {
-    return isTaskCreatedBy(task, user) || sameName(task.createdBy, user.name);
+    return isCreator;
   }
 
-  return sameName(task.assignedTo, user.name) || isTaskCreatedBy(task, user) || sameName(task.createdBy, user.name);
+  return sameName(task.assignedTo, user.name) || isCreator;
 }
 
 /** Match correspondence participant labels to a user's display name, including legacy labels such as "Ali Ahmadi" for "Ali". */
