@@ -124,6 +124,7 @@ export default function TaskDetailsClient({
     window.addEventListener("storage", refreshTaskPermissions);
     window.addEventListener("nexo-current-user-updated", refreshTaskPermissions);
     window.addEventListener("nexo-permissions-updated", refreshTaskPermissions);
+    window.addEventListener("nexo-users-updated", refreshTaskPermissions);
 
     const timer = window.setTimeout(() => {
       const savedTask = loadTasks().find((item) => item.id === id);
@@ -143,6 +144,7 @@ export default function TaskDetailsClient({
       window.removeEventListener("storage", refreshTaskPermissions);
       window.removeEventListener("nexo-current-user-updated", refreshTaskPermissions);
       window.removeEventListener("nexo-permissions-updated", refreshTaskPermissions);
+      window.removeEventListener("nexo-users-updated", refreshTaskPermissions);
     };
   }, [id]);
 
