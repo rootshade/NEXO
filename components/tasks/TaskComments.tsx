@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import ConfirmDeleteModal from "@/components/common/ConfirmDeleteModal";
+import { getCurrentUser } from "@/data/accessControl";
+import { canManageTaskComment } from "@/data/commentOwnership.cjs";
 import {
   Check,
   MessageCircle,
@@ -15,6 +17,7 @@ type TaskComment = {
   id: number;
   taskId: number;
   author: string;
+  authorId?: string;
   message: string;
   createdAt: string;
   updatedAt?: string;
@@ -25,7 +28,6 @@ type TaskCommentsProps = {
 };
 
 const STORAGE_KEY = "nexo_task_comments";
-const CURRENT_USER = "Mohammad";
 const MAX_COMMENT_LENGTH = 3000;
 
 function isTaskComment(value: unknown): value is TaskComment {
@@ -35,6 +37,7 @@ function isTaskComment(value: unknown): value is TaskComment {
     typeof comment.id === "number" &&
     typeof comment.taskId === "number" &&
     typeof comment.author === "string" &&
+    (comment.authorId === undefined || typeof comment.authorId === "string") &&
     typeof comment.message === "string" &&
     typeof comment.createdAt === "string"
   );
@@ -83,10 +86,17 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
     const trimmedMessage = message.trim();
     if (!trimmedMessage || !isLoaded || trimmedMessage.length > MAX_COMMENT_LENGTH) return;
 
+    const currentUser = getCurrentUser();
+    if (currentUser.status !== "Active") {
+      window.alert("An active account is required to post comments.");
+      return;
+    }
+
     const newComment: TaskComment = {
       id: Date.now(),
       taskId,
-      author: CURRENT_USER,
+      author: currentUser.name,
+      authorId: currentUser.id,
       message: trimmedMessage,
       createdAt: new Date().toISOString(),
     };
@@ -113,7 +123,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
 
   function handleEdit(commentId: number) {
     const existingComment = comments.find((comment) => comment.id === commentId);
-    if (!existingComment || existingComment.author !== CURRENT_USER) return;
+    if (!existingComment || !canManageTaskComment(existingComment, getCurrentUser())) return;
 
     const trimmedMessage = editingMessage.trim();
     if (!trimmedMessage) {
@@ -142,7 +152,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
 
   function handleDelete(commentId: number) {
     const comment = comments.find((item) => item.id === commentId);
-    if (!comment || comment.author !== CURRENT_USER) return;
+    if (!comment || !canManageTaskComment(comment, getCurrentUser())) return;
     setDeleteError("");
     setPendingDeleteId(commentId);
   }
@@ -234,7 +244,7 @@ export default function TaskComments({ taskId }: TaskCommentsProps) {
                     {comment.message}
                   </p>
 
-                  {comment.author === CURRENT_USER && (
+                  {canManageTaskComment(comment, getCurrentUser()) && (
                     <div className="mt-3 flex justify-end gap-2 border-t border-slate-800/80 pt-3">
                       <button
                         type="button"
